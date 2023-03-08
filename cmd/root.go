@@ -21,6 +21,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"go.infratographer.com/tenant-api/internal/config"
+	"go.infratographer.com/tenant-api/internal/migrations"
 	"go.infratographer.com/x/crdbx"
 	"go.infratographer.com/x/goosex"
 	"go.infratographer.com/x/loggingx"
@@ -28,9 +30,6 @@ import (
 	"go.infratographer.com/x/versionx"
 	"go.infratographer.com/x/viperx"
 	"go.uber.org/zap"
-
-	"go.infratographer.com/tenant-api/internal/config"
-	"go.infratographer.com/tenant-api/internal/migrations"
 )
 
 const appName = "tenant-api"

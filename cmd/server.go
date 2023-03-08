@@ -20,13 +20,12 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"go.infratographer.com/x/crdbx"
-	"go.infratographer.com/x/otelx"
-	"go.uber.org/zap"
-
 	"go.infratographer.com/tenant-api/internal/config"
 	"go.infratographer.com/tenant-api/pkg/api/v1"
 	"go.infratographer.com/tenant-api/pkg/echox"
+	"go.infratographer.com/x/crdbx"
+	"go.infratographer.com/x/otelx"
+	"go.uber.org/zap"
 )
 
 var (
