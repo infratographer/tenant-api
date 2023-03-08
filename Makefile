@@ -29,6 +29,9 @@ endif
 COCKROACH_VERSION_FILE = cockroach-$(COCKROACH_VERSION).$(OS_VERSION)-$(ARCH)
 COCKROACH_RELEASE_URL = https://binaries.cockroachdb.com/$(COCKROACH_VERSION_FILE).tgz
 
+GOLANGCI_LINT_REPO = github.com/golangci/golangci-lint
+GOLANGCI_LINT_VERSION = v1.50.1
+
 # go files to be checked
 GO_FILES=$(shell git ls-files '*.go')
 
@@ -43,9 +46,25 @@ test:  ## Runs unit tests.
 	@echo Running unit tests...
 	@go test -timeout 30s -cover -short ./...
 
+lint: golint  ## Runs all lint checks.
+
+golint: | vendor $(TOOLS_DIR)/golangci-lint  ## Runs Go lint checks.
+	@echo Linting Go files...
+	@$(TOOLS_DIR)/golangci-lint run
+
+vendor:  ## Downloads and tidies go modules.
+	@go mod download
+	@go mod tidy
+
 # Tools setup
 $(TOOLS_DIR):
 	mkdir -p $(TOOLS_DIR)
+
+$(TOOLS_DIR)/golangci-lint: $(TOOLS_DIR)
+	@echo "Installing $(GOLANGCI_LINT_REPO)/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)"
+	@GOBIN=$(ROOT_DIR)/$(TOOLS_DIR) go install $(GOLANGCI_LINT_REPO)/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	$@ version
+	$@ linters
 
 $(TOOLS_DIR)/cockroach: $(TOOLS_DIR)
 	@echo "Downloading cockroach: $(COCKROACH_RELEASE_URL)"

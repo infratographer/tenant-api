@@ -32,18 +32,6 @@ func v1TenantsResponse(c echo.Context, ts []*models.Tenant, pagination Paginatio
 	})
 }
 
-func v1NotFoundResponse(c echo.Context) error {
-	return c.JSON(http.StatusNotFound, struct {
-		Version string `json:"version"`
-		Message string `json:"message"`
-		Status  int    `json:"status"`
-	}{
-		Version: apiVersion,
-		Message: "resource not found",
-		Status:  http.StatusNotFound,
-	})
-}
-
 func v1BadRequestResponse(c echo.Context, err error) error {
 	return c.JSON(http.StatusBadRequest, struct {
 		Version string `json:"version"`
@@ -55,20 +43,6 @@ func v1BadRequestResponse(c echo.Context, err error) error {
 		Message: "bad request",
 		Error:   err.Error(),
 		Status:  http.StatusBadRequest,
-	})
-}
-
-func v1UnprocessableEntityResponse(c echo.Context, err error) error {
-	return c.JSON(http.StatusUnprocessableEntity, struct {
-		Version string `json:"version"`
-		Message string `json:"message"`
-		Error   string `json:"error"`
-		Status  int    `json:"status"`
-	}{
-		Version: apiVersion,
-		Message: "unprocessable entity",
-		Error:   err.Error(),
-		Status:  http.StatusUnprocessableEntity,
 	})
 }
 
