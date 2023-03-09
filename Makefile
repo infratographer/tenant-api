@@ -49,6 +49,13 @@ test:  ## Runs unit tests.
 	@echo Running unit tests...
 	@go test -timeout 30s -cover -short ./...
 
+.PHONY: coverage
+coverage:  ## Generates a test coverage report.
+	@echo Generating coverage report...
+	@go test -timeout 30s ./... -coverprofile=coverage.out -covermode=atomic
+	@go tool cover -func=coverage.out
+	@go tool cover -html=coverage.out
+
 .PHONY: lint
 lint: golint gci-diff  ## Runs all lint checks.
 
