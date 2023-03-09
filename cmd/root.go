@@ -30,7 +30,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.infratographer.com/tenant-api/internal/config"
-	"go.infratographer.com/tenant-api/internal/dbschema"
+	"go.infratographer.com/tenant-api/internal/migrations"
 )
 
 const appName = "tenant-api"
@@ -75,7 +75,7 @@ func init() {
 
 	// Add migrate command
 	goosex.RegisterCobraCommand(rootCmd, func() {
-		goosex.SetBaseFS(dbschema.Migrations)
+		goosex.SetBaseFS(migrations.Migrations)
 		goosex.SetLogger(logger.Sugar())
 		goosex.SetDBURI(config.AppConfig.CRDB.GetURI())
 	})
