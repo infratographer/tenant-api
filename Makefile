@@ -50,7 +50,7 @@ test:  ## Runs unit tests.
 	@go test -timeout 30s -cover -short ./...
 
 .PHONY: coverage
-coverage:  ## Generates a test coverage report.
+coverage: | $(TOOLS_DIR)/cockroach  ## Generates a test coverage report.
 	@echo Generating coverage report...
 	@go test -timeout 30s ./... -coverprofile=coverage.out -covermode=atomic
 	@go tool cover -func=coverage.out
