@@ -11,7 +11,7 @@ import (
 
 	"github.com/cockroachdb/cockroach-go/v2/testserver"
 	"github.com/pressly/goose/v3"
-	"go.infratographer.com/tenant-api/internal/migrations"
+	dbm "go.infratographer.com/tenant-api/db"
 	"go.infratographer.com/tenant-api/pkg/echox"
 	"go.infratographer.com/tenant-api/pkg/jwtauth"
 	"go.infratographer.com/x/crdbx"
@@ -143,7 +143,7 @@ func newTestServer(config *testServerConfig) (*testServer, error) {
 		return nil, err
 	}
 
-	goose.SetBaseFS(migrations.Migrations)
+	goose.SetBaseFS(dbm.Migrations)
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		ts.Close()
@@ -151,7 +151,7 @@ func newTestServer(config *testServerConfig) (*testServer, error) {
 		return nil, err
 	}
 
-	if err := goose.Up(db, "."); err != nil {
+	if err := goose.Up(db, "migrations"); err != nil {
 		ts.Close()
 
 		return nil, err
