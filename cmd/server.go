@@ -1,18 +1,3 @@
-/*
-Copyright © 2022 The Infratographer Authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 package cmd
 
 import (
@@ -36,6 +21,7 @@ import (
 )
 
 var (
+	// APIDefaultListen defines the default listening address for the tenant-api.
 	APIDefaultListen = ":7601"
 )
 
@@ -56,7 +42,6 @@ func init() {
 	// audit log path
 	serveCmd.Flags().String("audit-log-path", "/app-audit/audit.log", "Path to the audit log file")
 	viperx.MustBindFlag(viper.GetViper(), "audit.log.path", serveCmd.Flags().Lookup("audit-log-path"))
-
 }
 
 func serve(ctx context.Context) {
@@ -96,7 +81,7 @@ func serve(ctx context.Context) {
 	e := echox.NewServer()
 
 	if auditMiddleware != nil {
-		defer auditCloseFn()
+		defer auditCloseFn() //nolint:errcheck // Not needed to check returned error.
 
 		e.Use(auditMiddleware.Audit())
 	}
@@ -151,6 +136,7 @@ func newAuditMiddleware(ctx context.Context) (*echoaudit.Middleware, func() erro
 	}
 
 	auditLogPath := viper.GetViper().GetString("audit.log.path")
+
 	fd, err := helpers.OpenAuditLogFileUntilSuccessWithContext(ctx, auditLogPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to open audit log file: %w", err)
