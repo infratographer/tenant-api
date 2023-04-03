@@ -19,7 +19,7 @@ services:
       - .devcontainer/scripts/app-entrypoint.sh
     env_file:
       - .env
-      - .env.go
+      - .go.env
     volumes:
       - ./nsc:/nsc
       - ..:/workspace:cached
