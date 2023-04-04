@@ -21,6 +21,7 @@ const (
 	natsMsgSubTimeout   = 2 * time.Second
 	tenantSubjectCreate = "com.infratographer.events.tenants.create.global"
 	tenantSubjectUpdate = "com.infratographer.events.tenants.update.global"
+	tenantSubjectDelete = "com.infratographer.events.tenants.delete.global"
 	tenantBaseURN       = "urn:infratographer:tenants:"
 )
 
@@ -358,5 +359,41 @@ func TestTenantsWithAuth(t *testing.T) {
 		case <-time.After(natsMsgSubTimeout):
 			t.Error("failed to receive nats message")
 		}
+	})
+
+	t.Run("delete tenant", func(t *testing.T) {
+		resp, err := srv.RequestWithClient(http.DefaultClient, http.MethodDelete, "/v1/tenants/"+t1Resp.Tenant.ID, nil, nil, nil)
+		resp.Body.Close() //nolint:errcheck // Not needed
+		require.NoError(t, err, "no error expected for updating subtenant")
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode, "unexpected status code returned")
+
+		resp, err = srv.Request(http.MethodDelete, "/v1/tenants/"+t1Resp.Tenant.ID, nil, nil, nil)
+		resp.Body.Close() //nolint:errcheck // Not needed
+		require.NoError(t, err, "no error expected for updating subtenant")
+		assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code returned")
+
+		select {
+		case msg := <-msgChan:
+			pMsg := &pubsubx.Message{}
+			err = json.Unmarshal(msg.Data, pMsg)
+			assert.NoError(t, err)
+
+			assert.Equal(t, tenantSubjectDelete, msg.Subject, "expected nats subject to be tenant delete subject")
+			assert.Equal(t, "urn:test:user", pMsg.ActorURN, "expected auth subject for actor urn")
+			assert.Equal(t, pubsub.DeleteEventType, pMsg.EventType, "expected event type to be delete")
+			assert.Equal(t, tenantBaseURN+t1aResp.Tenant.ID, pMsg.SubjectURN, "expected subject urn to be returned tenant urn")
+			require.Empty(t, pMsg.AdditionalSubjectURNs, "unexpected additional subject urns")
+		case <-time.After(natsMsgSubTimeout):
+			t.Error("failed to receive nats message")
+		}
+	})
+
+	t.Run("get deleted tenant", func(t *testing.T) {
+		var result *v1TenantResponse
+
+		resp, err := srv.Request(http.MethodGet, "/v1/tenants/"+t1aResp.Tenant.ID, nil, nil, &result)
+		resp.Body.Close() //nolint:errcheck // Not needed
+		require.NoError(t, err, "no error expected for tenant list")
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode, "unexpected status code returned")
 	})
 }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"errors"
 
 	"github.com/labstack/echo/v4"
@@ -202,6 +203,55 @@ func (r *Router) tenantUpdate(c echo.Context) error {
 	}
 
 	return v1TenantGetResponse(c, t)
+}
+
+func (r *Router) tenantDelete(c echo.Context) error {
+	ctx, span := tracer.Start(c.Request().Context(), "tenantDelete")
+	defer span.End()
+
+	var mods []qm.QueryMod
+
+	tenantID, err := parseUUID(c, "id")
+	if err != nil {
+		return v1BadRequestResponse(c, err)
+	}
+
+	mods = append(mods, models.TenantWhere.ID.EQ(tenantID))
+
+	t, err := models.Tenants(mods...).One(ctx, r.db)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return v1TenantNotFoundResponse(c, err)
+		}
+
+		r.logger.Error("failed to query tenants", zap.Error(err))
+
+		return v1InternalServerErrorResponse(c, err)
+	}
+
+	if _, err := t.Delete(ctx, r.db, false); err != nil {
+		r.logger.Error("failed to delete tenant", zap.Error(err))
+
+		return err
+	}
+
+	actor := jwtauth.Actor(c)
+
+	msg, err := pubsub.DeleteTenantMessage(
+		actor,
+		pubsub.NewTenantURN(t.ID),
+	)
+	if err != nil {
+		// TODO: add status to reconcile and requeue this
+		r.logger.Error("failed to create, delete tenant message", zap.Error(err))
+	}
+
+	if err := r.pubsub.PublishDelete(ctx, "tenants", "global", msg); err != nil {
+		// TODO: add status to reconcile and requeue this
+		r.logger.Error("failed to publish, delete tenant message", zap.Error(err))
+	}
+
+	return nil
 }
 
 func v1Tenant(t *models.Tenant) *tenant {

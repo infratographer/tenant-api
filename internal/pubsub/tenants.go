@@ -13,3 +13,8 @@ func NewTenantMessage(actorURN string, tenantURN string, additionalSubjectURNs .
 func UpdateTenantMessage(actorURN string, tenantURN string, additionalSubjectURNs ...string) (*pubsubx.Message, error) {
 	return newMessage(actorURN, tenantURN, additionalSubjectURNs...), nil
 }
+
+// DeleteTenantMessage creates a delete tenant event message
+func DeleteTenantMessage(actorURN string, tenantURN string, additionalSubjectURNs ...string) (*pubsubx.Message, error) {
+	return newMessage(actorURN, tenantURN, additionalSubjectURNs...), nil
+}
