@@ -110,6 +110,33 @@ func (r *Router) tenantList(c echo.Context) error {
 	return v1TenantsResponse(c, ts, pagination)
 }
 
+func (r *Router) tenantGet(c echo.Context) error {
+	ctx, span := tracer.Start(c.Request().Context(), "tenantGet")
+	defer span.End()
+
+	var mods []qm.QueryMod
+
+	tenantID, err := parseUUID(c, "id")
+	if err != nil {
+		return v1BadRequestResponse(c, err)
+	}
+
+	mods = append(mods, models.TenantWhere.ID.EQ(tenantID))
+
+	t, err := models.Tenants(mods...).One(ctx, r.db)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return v1TenantNotFoundResponse(c, err)
+		}
+
+		r.logger.Error("failed to query tenants", zap.Error(err))
+
+		return v1InternalServerErrorResponse(c, err)
+	}
+
+	return v1TenantGetResponse(c, t)
+}
+
 func v1Tenant(t *models.Tenant) *tenant {
 	return &tenant{
 		ID:             t.ID,

@@ -69,7 +69,7 @@ func (r *Router) Routes(e *echo.Echo) {
 		v1.GET("/tenants", r.tenantList)
 		v1.POST("/tenants", r.tenantCreate)
 
-		// v1.GET("/tenants/:id", r.tenantGet)
+		v1.GET("/tenants/:id", r.tenantGet)
 		// v1.PATCH("/tenants/:id", r.tentantUpdate)
 		// v1.DELETE("/tenants/:id", r.tenantDelete)
 

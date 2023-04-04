@@ -296,4 +296,30 @@ func TestTenantsWithAuth(t *testing.T) {
 		assert.Equal(t, t1aResp.Tenant.ID, result.Tenants[0].ID, "expected tenant1.a id")
 		assert.Equal(t, t1aResp.Tenant.Name, result.Tenants[0].Name, "expected tenant1.a name")
 	})
+
+	t.Run("get tenant", func(t *testing.T) {
+		var result *v1TenantResponse
+
+		resp, err := srv.Request(http.MethodGet, "/v1/tenants/"+t1Resp.Tenant.ID, nil, nil, &result)
+		resp.Body.Close() //nolint:errcheck // Not needed
+		require.NoError(t, err, "no error expected for tenant list")
+		assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code returned")
+
+		require.NotEmpty(t, result.Tenant, "expected tenant")
+		assert.Equal(t, t1Resp.Tenant.ID, result.Tenant.ID, "expected tenant1 id")
+		assert.Equal(t, t1Resp.Tenant.Name, result.Tenant.Name, "expected tenant1 name")
+	})
+
+	t.Run("get subtenant", func(t *testing.T) {
+		var result *v1TenantResponse
+
+		resp, err := srv.Request(http.MethodGet, "/v1/tenants/"+t1aResp.Tenant.ID, nil, nil, &result)
+		resp.Body.Close() //nolint:errcheck // Not needed
+		require.NoError(t, err, "no error expected for tenant list")
+		assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code returned")
+
+		require.NotEmpty(t, result.Tenant, "expected tenant")
+		assert.Equal(t, t1aResp.Tenant.ID, result.Tenant.ID, "expected subtenant id")
+		assert.Equal(t, t1aResp.Tenant.Name, result.Tenant.Name, "expected subtenant name")
+	})
 }
