@@ -1,6 +1,6 @@
 module go.infratographer.com/tenant-api
 
-replace github.com/golang-jwt/jwt/v4 => github.com/golang-jwt/jwt/v4 v4.5.0
+replace github.com/golang-jwt/jwt/v5 => github.com/golang-jwt/jwt/v4 v5.0.0
 
 go 1.20
 
