@@ -4,20 +4,21 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.infratographer.com/x/gidx"
 )
 
 func TestNewURN(t *testing.T) {
 	tests := []struct {
 		name string
 		kind string
-		id   string
+		id   gidx.PrefixedID
 		want string
 	}{
 		{
 			name: "example urn",
 			kind: "testThing",
-			id:   "9def378e-be7b-4566-83b5-20ae8ccf99cb",
-			want: "urn:infratographer:testThing:9def378e-be7b-4566-83b5-20ae8ccf99cb",
+			id:   "abcdefg-abcd-abcdefg",
+			want: "urn:infratographer:testThing:abcdefg-abcd-abcdefg",
 		},
 	}
 	for _, tt := range tests {
@@ -32,14 +33,14 @@ func Test_newURN(t *testing.T) {
 	tests := []struct {
 		name string
 		kind string
-		id   string
+		id   gidx.PrefixedID
 		want string
 	}{
 		{
 			name: "example",
 			kind: "foo",
-			id:   "8cb89124-7954-4c98-85d5-e1fad6e3d723",
-			want: "urn:infratographer:foo:8cb89124-7954-4c98-85d5-e1fad6e3d723",
+			id:   "abcdefg-abcd-abcdefg",
+			want: "urn:infratographer:foo:abcdefg-abcd-abcdefg",
 		},
 	}
 	for _, tt := range tests {
@@ -53,13 +54,13 @@ func Test_newURN(t *testing.T) {
 func TestNewTenantURN(t *testing.T) {
 	tests := []struct {
 		name string
-		id   string
+		id   gidx.PrefixedID
 		want string
 	}{
 		{
 			name: "example",
-			id:   "8cb89124-7954-4c98-85d5-e1fad6e3d723",
-			want: "urn:infratographer:tenants:8cb89124-7954-4c98-85d5-e1fad6e3d723",
+			id:   "abcdefg-abcd-abcdefg",
+			want: "urn:infratographer:tenants:abcdefg-abcd-abcdefg",
 		},
 	}
 	for _, tt := range tests {

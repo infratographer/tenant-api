@@ -7,7 +7,6 @@ go 1.20
 require (
 	github.com/cockroachdb/cockroach-go/v2 v2.3.3
 	github.com/friendsofgo/errors v0.9.2
-	github.com/google/uuid v1.3.0
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/metal-toolbox/auditevent v0.7.0
 	github.com/nats-io/nats-server/v2 v2.9.16
@@ -19,7 +18,7 @@ require (
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.14.2
 	github.com/volatiletech/strmangle v0.0.4
-	go.infratographer.com/x v0.0.8
+	go.infratographer.com/x v0.0.9
 	go.opentelemetry.io/otel v1.14.0
 	go.opentelemetry.io/otel/trace v1.14.0
 	go.uber.org/zap v1.24.0
@@ -41,6 +40,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.14.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -52,6 +52,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/pgtype v1.14.0 // indirect
 	github.com/jackc/pgx/v4 v4.18.1 // indirect
+	github.com/jaevor/go-nanoid v1.3.0 // indirect
 	github.com/klauspost/compress v1.16.4 // indirect
 	github.com/labstack/echo-contrib v0.14.1 // indirect
 	github.com/labstack/echo-jwt/v4 v4.1.0 // indirect
