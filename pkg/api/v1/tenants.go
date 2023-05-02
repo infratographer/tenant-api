@@ -70,11 +70,11 @@ func (r *Router) tenantCreate(c echo.Context) error {
 		Name: createRequest.Name,
 	}
 
-	var additionalURNs []string
+	var additionalGID []gidx.PrefixedID
 
 	if tenantID != "" {
 		t.ParentTenantID = nullx.PrefixedIDFrom(tenantID)
-		additionalURNs = append(additionalURNs, pubsub.NewTenantURN(tenantID))
+		additionalGID = append(additionalGID, tenantID)
 	}
 
 	if err := t.Insert(ctx, r.db, boil.Infer()); err != nil {
@@ -86,9 +86,9 @@ func (r *Router) tenantCreate(c echo.Context) error {
 	actor := echojwtx.Actor(c)
 
 	msg, err := pubsub.NewTenantMessage(
-		actor,
-		pubsub.NewTenantURN(t.ID),
-		additionalURNs...,
+		gidx.PrefixedID(actor),
+		t.ID,
+		additionalGID...,
 	)
 	if err != nil {
 		// TODO: add status to reconcile and requeue this
@@ -209,8 +209,8 @@ func (r *Router) tenantUpdate(c echo.Context) error {
 	actor := echojwtx.Actor(c)
 
 	msg, err := pubsub.UpdateTenantMessage(
-		actor,
-		pubsub.NewTenantURN(t.ID),
+		gidx.PrefixedID(actor),
+		t.ID,
 	)
 	if err != nil {
 		// TODO: add status to reconcile and requeue this
@@ -258,8 +258,8 @@ func (r *Router) tenantDelete(c echo.Context) error {
 	actor := echojwtx.Actor(c)
 
 	msg, err := pubsub.DeleteTenantMessage(
-		actor,
-		pubsub.NewTenantURN(t.ID),
+		gidx.PrefixedID(actor),
+		t.ID,
 	)
 	if err != nil {
 		// TODO: add status to reconcile and requeue this

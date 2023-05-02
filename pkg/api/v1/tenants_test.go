@@ -24,7 +24,6 @@ const (
 	tenantSubjectCreate = "com.infratographer.events.tenants.create.global"
 	tenantSubjectUpdate = "com.infratographer.events.tenants.update.global"
 	tenantSubjectDelete = "com.infratographer.events.tenants.delete.global"
-	tenantBaseURN       = "urn:infratographer:tenants:"
 )
 
 func TestTenantsWithoutAuth(t *testing.T) {
@@ -79,14 +78,14 @@ func TestTenantsWithoutAuth(t *testing.T) {
 
 		select {
 		case msg := <-msgChan:
-			pMsg := &pubsubx.Message{}
+			pMsg := &pubsubx.ChangeMessage{}
 			err = json.Unmarshal(msg.Data, pMsg)
 			require.NoError(t, err)
 
 			assert.Equal(t, tenantSubjectCreate, msg.Subject, "expected nats subject to be tenant create subject")
-			assert.Equal(t, "", pMsg.ActorURN, "expected no actor for unauthenticated client")
+			assert.Empty(t, pMsg.ActorID, "expected no actor for unauthenticated client")
 			assert.Equal(t, pubsub.CreateEventType, pMsg.EventType, "expected event type to be create")
-			assert.Equal(t, tenantBaseURN+string(t1Resp.Tenant.ID), pMsg.SubjectURN, "expected subject urn to be returned tenant urn")
+			assert.Equal(t, t1Resp.Tenant.ID, pMsg.SubjectID, "expected subject id to be returned tenant id")
 		case <-time.After(natsMsgSubTimeout):
 			t.Error("failed to receive nats message")
 		}
@@ -108,16 +107,16 @@ func TestTenantsWithoutAuth(t *testing.T) {
 
 		select {
 		case msg := <-msgChan:
-			pMsg := &pubsubx.Message{}
+			pMsg := &pubsubx.ChangeMessage{}
 			err = json.Unmarshal(msg.Data, pMsg)
 			assert.NoError(t, err)
 
 			assert.Equal(t, tenantSubjectCreate, msg.Subject, "expected nats subject to be tenant create subject")
-			assert.Equal(t, "", pMsg.ActorURN, "expected no actor for unauthenticated client")
+			assert.Empty(t, pMsg.ActorID, "expected no actor for unauthenticated client")
 			assert.Equal(t, pubsub.CreateEventType, pMsg.EventType, "expected event type to be create")
-			assert.Equal(t, tenantBaseURN+string(t1aResp.Tenant.ID), pMsg.SubjectURN, "expected subject urn to be returned tenant urn")
-			require.NotEmpty(t, pMsg.AdditionalSubjectURNs, "expected additional subject urns")
-			assert.Contains(t, pMsg.AdditionalSubjectURNs, tenantBaseURN+string(t1Resp.Tenant.ID), "expected parent urn in additional subject urns")
+			assert.Equal(t, t1aResp.Tenant.ID, pMsg.SubjectID, "expected subject id to be returned tenant id")
+			require.NotEmpty(t, pMsg.AdditionalSubjectIDs, "expected additional subject ids")
+			assert.Contains(t, pMsg.AdditionalSubjectIDs, t1Resp.Tenant.ID, "expected parent id in additional subject ids")
 		case <-time.After(natsMsgSubTimeout):
 			t.Error("failed to receive nats message")
 		}
@@ -151,7 +150,9 @@ func TestTenantsWithoutAuth(t *testing.T) {
 }
 
 func TestTenantsWithAuth(t *testing.T) {
-	oauthClient, issuer, close := echojwtx.TestOAuthClient("urn:test:user", "")
+	testActorID := gidx.MustNewID(TenantIDPrefix)
+
+	oauthClient, issuer, close := echojwtx.TestOAuthClient(string(testActorID), "")
 	defer close()
 
 	srv, err := newTestServer(t, &testServerConfig{
@@ -223,14 +224,14 @@ func TestTenantsWithAuth(t *testing.T) {
 
 		select {
 		case msg := <-msgChan:
-			pMsg := &pubsubx.Message{}
+			pMsg := &pubsubx.ChangeMessage{}
 			err = json.Unmarshal(msg.Data, pMsg)
 			require.NoError(t, err)
 
 			assert.Equal(t, tenantSubjectCreate, msg.Subject, "expected nats subject to be tenant create subject")
-			assert.Equal(t, "urn:test:user", pMsg.ActorURN, "expected auth subject for actor urn")
+			assert.Equal(t, testActorID, pMsg.ActorID, "expected auth subject for actor id")
 			assert.Equal(t, pubsub.CreateEventType, pMsg.EventType, "expected event type to be create")
-			assert.Equal(t, tenantBaseURN+string(t1Resp.Tenant.ID), pMsg.SubjectURN, "expected subject urn to be returned tenant urn")
+			assert.Equal(t, t1Resp.Tenant.ID, pMsg.SubjectID, "expected subject id to be returned tenant id")
 		case <-time.After(natsMsgSubTimeout):
 			t.Error("failed to receive nats message")
 		}
@@ -260,16 +261,16 @@ func TestTenantsWithAuth(t *testing.T) {
 
 		select {
 		case msg := <-msgChan:
-			pMsg := &pubsubx.Message{}
+			pMsg := &pubsubx.ChangeMessage{}
 			err = json.Unmarshal(msg.Data, pMsg)
 			assert.NoError(t, err)
 
 			assert.Equal(t, tenantSubjectCreate, msg.Subject, "expected nats subject to be tenant create subject")
-			assert.Equal(t, "urn:test:user", pMsg.ActorURN, "expected auth subject for actor urn")
+			assert.Equal(t, testActorID, pMsg.ActorID, "expected auth subject for actor id")
 			assert.Equal(t, pubsub.CreateEventType, pMsg.EventType, "expected event type to be create")
-			assert.Equal(t, tenantBaseURN+string(t1aResp.Tenant.ID), pMsg.SubjectURN, "expected subject urn to be returned tenant urn")
-			require.NotEmpty(t, pMsg.AdditionalSubjectURNs, "expected additional subject urns")
-			assert.Contains(t, pMsg.AdditionalSubjectURNs, tenantBaseURN+string(t1Resp.Tenant.ID), "expected parent urn in additional subject urns")
+			assert.Equal(t, t1aResp.Tenant.ID, pMsg.SubjectID, "expected subject id to be returned tenant id")
+			require.NotEmpty(t, pMsg.AdditionalSubjectIDs, "expected additional subject ids")
+			assert.Contains(t, pMsg.AdditionalSubjectIDs, t1Resp.Tenant.ID, "expected parent id in additional subject ids")
 		case <-time.After(natsMsgSubTimeout):
 			t.Error("failed to receive nats message")
 		}
@@ -349,15 +350,15 @@ func TestTenantsWithAuth(t *testing.T) {
 
 		select {
 		case msg := <-msgChan:
-			pMsg := &pubsubx.Message{}
+			pMsg := &pubsubx.ChangeMessage{}
 			err = json.Unmarshal(msg.Data, pMsg)
 			assert.NoError(t, err)
 
 			assert.Equal(t, tenantSubjectUpdate, msg.Subject, "expected nats subject to be tenant update subject")
-			assert.Equal(t, "urn:test:user", pMsg.ActorURN, "expected auth subject for actor urn")
+			assert.Equal(t, testActorID, pMsg.ActorID, "expected auth subject for actor id")
 			assert.Equal(t, pubsub.UpdateEventType, pMsg.EventType, "expected event type to be update")
-			assert.Equal(t, tenantBaseURN+string(t1aResp.Tenant.ID), pMsg.SubjectURN, "expected subject urn to be returned tenant urn")
-			require.Empty(t, pMsg.AdditionalSubjectURNs, "unexpected additional subject urns")
+			assert.Equal(t, t1aResp.Tenant.ID, pMsg.SubjectID, "expected subject id to be returned tenant id")
+			require.Empty(t, pMsg.AdditionalSubjectIDs, "unexpected additional subject ids")
 		case <-time.After(natsMsgSubTimeout):
 			t.Error("failed to receive nats message")
 		}
@@ -376,15 +377,15 @@ func TestTenantsWithAuth(t *testing.T) {
 
 		select {
 		case msg := <-msgChan:
-			pMsg := &pubsubx.Message{}
+			pMsg := &pubsubx.ChangeMessage{}
 			err = json.Unmarshal(msg.Data, pMsg)
 			assert.NoError(t, err)
 
 			assert.Equal(t, tenantSubjectDelete, msg.Subject, "expected nats subject to be tenant delete subject")
-			assert.Equal(t, "urn:test:user", pMsg.ActorURN, "expected auth subject for actor urn")
+			assert.Equal(t, testActorID, pMsg.ActorID, "expected auth subject for actor id")
 			assert.Equal(t, pubsub.DeleteEventType, pMsg.EventType, "expected event type to be delete")
-			assert.Equal(t, tenantBaseURN+string(t1aResp.Tenant.ID), pMsg.SubjectURN, "expected subject urn to be returned tenant urn")
-			require.Empty(t, pMsg.AdditionalSubjectURNs, "unexpected additional subject urns")
+			assert.Equal(t, t1aResp.Tenant.ID, pMsg.SubjectID, "expected subject id to be returned tenant id")
+			require.Empty(t, pMsg.AdditionalSubjectIDs, "unexpected additional subject ids")
 		case <-time.After(natsMsgSubTimeout):
 			t.Error("failed to receive nats message")
 		}
