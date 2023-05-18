@@ -2,29 +2,31 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
 	"github.com/labstack/echo/v4"
-	"github.com/metal-toolbox/auditevent/helpers"
-	"github.com/metal-toolbox/auditevent/middleware/echoaudit"
-	nats "github.com/nats-io/nats.go"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"go.infratographer.com/tenant-api/internal/config"
-	"go.infratographer.com/tenant-api/internal/pubsub"
-	"go.infratographer.com/tenant-api/pkg/api/v1"
 	"go.infratographer.com/x/crdbx"
 	"go.infratographer.com/x/echojwtx"
 	"go.infratographer.com/x/echox"
 	"go.infratographer.com/x/otelx"
 	"go.infratographer.com/x/versionx"
-	"go.infratographer.com/x/viperx"
 	"go.uber.org/zap"
+
+	"go.infratographer.com/tenant-api/internal/config"
+	ent "go.infratographer.com/tenant-api/internal/ent/generated"
+	"go.infratographer.com/tenant-api/internal/graphapi"
 )
 
+// APIDefaultListen defines the default listening address for the tenant-api.
+const APIDefaultListen = ":7902"
+
 var (
-	// APIDefaultListen defines the default listening address for the tenant-api.
-	APIDefaultListen = ":7601"
+	enablePlayground bool
+	serveDevMode     bool
 )
 
 var serveCmd = &cobra.Command{
@@ -41,13 +43,35 @@ func init() {
 	echox.MustViperFlags(viper.GetViper(), serveCmd.Flags(), APIDefaultListen)
 	echojwtx.MustViperFlags(viper.GetViper(), serveCmd.Flags())
 
-	// audit log path
-	serveCmd.Flags().String("audit-log-path", "/app-audit/audit.log", "Path to the audit log file")
-	viperx.MustBindFlag(viper.GetViper(), "audit.log.path", serveCmd.Flags().Lookup("audit-log-path"))
+	// only available as a CLI arg because it shouldn't be something that could accidentially end up in a config file or env var
+	serveCmd.Flags().BoolVar(&serveDevMode, "dev", false, "dev mode: enables playground, disables all auth checks, sets CORS to allow all, pretty logging, etc.")
+	serveCmd.Flags().BoolVar(&enablePlayground, "playground", false, "enable the graph playground")
 }
 
 func serve(ctx context.Context) {
-	err := otelx.InitTracer(config.AppConfig.Tracing, appName, logger.Sugar())
+	if serveDevMode {
+		enablePlayground = true
+		config.AppConfig.Logging.Debug = true
+		config.AppConfig.Logging.Pretty = true
+		config.AppConfig.Server.WithMiddleware(middleware.CORS())
+		// this is a hack, echojwt needs to be updated to go into AppConfig
+		viper.Set("oidc.enabled", false)
+	}
+
+	// natsClient, err := configureNatsClient()
+	// if err != nil {
+	// 	logger.Error("failed to configure nats client", zap.Error(err))
+	// 	return err
+	// }
+
+	// js, natsClose, err := newJetstreamConnection()
+	// if err != nil {
+	// 	logger.Fatal("failed to create NATS jetstream connection", zap.Error(err))
+	// }
+
+	// defer natsClose()
+
+	err := otelx.InitTracer(config.AppConfig.Tracing, appName, logger)
 	if err != nil {
 		logger.Fatal("unable to initialize tracing system", zap.Error(err))
 	}
@@ -57,30 +81,27 @@ func serve(ctx context.Context) {
 		logger.Fatal("unable to initialize crdb client", zap.Error(err))
 	}
 
-	js, natsClose, err := newJetstreamConnection()
-	if err != nil {
-		logger.Fatal("failed to create NATS jetstream connection", zap.Error(err))
+	defer db.Close()
+
+	entDB := entsql.OpenDB(dialect.Postgres, db)
+
+	cOpts := []ent.Option{ent.Driver(entDB)}
+
+	if config.AppConfig.Logging.Debug {
+		cOpts = append(cOpts,
+			ent.Log(logger.Named("ent").Debugln),
+			ent.Debug(),
+		)
 	}
 
-	defer natsClose()
+	client := ent.NewClient(cOpts...)
 
-	auditMiddleware, auditCloseFn, err := newAuditMiddleware(ctx)
-	if err != nil {
-		logger.Fatal("Failed to initialize audit middleware", zap.Error(err))
-	}
-
-	srv, err := echox.NewServer(logger, echox.ConfigFromViper(viper.GetViper()), versionx.BuildDetails())
+	srv, err := echox.NewServer(logger.Desugar(), echox.ConfigFromViper(viper.GetViper()), versionx.BuildDetails())
 	if err != nil {
 		logger.Fatal("failed to initialize new server", zap.Error(err))
 	}
 
 	var middleware []echo.MiddlewareFunc
-
-	if auditMiddleware != nil {
-		defer auditCloseFn() //nolint:errcheck // Not needed to check returned error.
-
-		middleware = append(middleware, auditMiddleware.Audit())
-	}
 
 	if config, err := echojwtx.AuthConfigFromViper(viper.GetViper()); err != nil {
 		logger.Fatal("failed to initialize jwt authentication", zap.Error(err))
@@ -95,63 +116,38 @@ func serve(ctx context.Context) {
 		middleware = append(middleware, auth.Middleware())
 	}
 
-	r := api.NewRouter(
-		db,
-		pubsub.NewClient(
-			pubsub.WithJetreamContext(js),
-			pubsub.WithLogger(logger),
-			pubsub.WithStreamName(viper.GetString("nats.stream-name")),
-			pubsub.WithSubjectPrefix(viper.GetString("nats.subject-prefix")),
-		),
-		api.WithLogger(logger),
-		api.WithMiddleware(middleware...),
-	)
+	r := graphapi.NewResolver(client, logger.Named("resolvers"))
+	handler := r.Handler(enablePlayground)
 
-	srv.AddHandler(r).AddReadinessCheck("database", r.DatabaseCheck)
+	srv.AddHandler(handler)
+
+	// srv.AddHandler(r).AddReadinessCheck("database", r.DatabaseCheck)
 
 	if err := srv.Run(); err != nil {
 		logger.Fatal("failed to run server", zap.Error(err))
 	}
 }
 
-func newJetstreamConnection() (nats.JetStreamContext, func(), error) {
-	opts := []nats.Option{nats.Name(appName)}
+// func newJetstreamConnection() (nats.JetStreamContext, func(), error) {
+// 	opts := []nats.Option{nats.Name(appName)}
 
-	if viper.GetBool("debug") {
-		logger.Debug("enabling development settings")
+// 	if viper.GetBool("debug") {
+// 		logger.Debug("enabling development settings")
 
-		opts = append(opts, nats.Token(viper.GetString("nats.token")))
-	} else {
-		opts = append(opts, nats.UserCredentials(viper.GetString("nats.creds-file")))
-	}
+// 		opts = append(opts, nats.Token(viper.GetString("nats.token")))
+// 	} else {
+// 		opts = append(opts, nats.UserCredentials(viper.GetString("nats.creds-file")))
+// 	}
 
-	nc, err := nats.Connect(viper.GetString("nats.url"), opts...)
-	if err != nil {
-		return nil, nil, err
-	}
+// 	nc, err := nats.Connect(viper.GetString("nats.url"), opts...)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
 
-	js, err := nc.JetStream()
-	if err != nil {
-		return nil, nil, err
-	}
+// 	js, err := nc.JetStream()
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
 
-	return js, nc.Close, nil
-}
-
-func newAuditMiddleware(ctx context.Context) (*echoaudit.Middleware, func() error, error) {
-	auditFile := viper.GetString("audit.log.path")
-	if auditFile == "" {
-		logger.Warn("audit log path not provied, logging disabled.")
-
-		return nil, nil, nil
-	}
-
-	auditLogPath := viper.GetViper().GetString("audit.log.path")
-
-	fd, err := helpers.OpenAuditLogFileUntilSuccessWithContext(ctx, auditLogPath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to open audit log file: %w", err)
-	}
-
-	return echoaudit.NewJSONMiddleware("tenant-api", fd), fd.Close, nil
-}
+// 	return js, nc.Close, nil
+// }

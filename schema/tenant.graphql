@@ -1,0 +1,40 @@
+directive @prefixedID(prefix: String!) on OBJECT
+
+interface ResourceContainer {
+  id: ID!
+}
+
+interface MetadataNode {
+  id: ID!
+}
+
+extend type Query {
+  """
+  Lookup a tenant by ID.
+  """
+  tenant(
+    """
+    The ID of the tenant.
+    """
+    id: ID!
+  ): Tenant!
+}
+
+extend type Mutation {
+  """
+  Create a Tenant.
+  """
+  tenantCreate(
+    input: CreateTenantInput!
+  ): TenantCreatePayload!
+}
+
+"""
+Return response from tenantCreate
+"""
+type TenantCreatePayload {
+  """
+  The created tenant.
+  """
+  tenant: Tenant!
+}
