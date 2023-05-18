@@ -14,22 +14,28 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	natssrv "github.com/nats-io/nats-server/v2/server"
+	"github.com/nats-io/nats.go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"go.uber.org/zap"
-
+	"go.infratographer.com/x/echojwtx"
 	"go.infratographer.com/x/goosex"
+	"go.uber.org/zap"
 
 	"go.infratographer.com/tenant-api/db"
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"
+	"go.infratographer.com/tenant-api/internal/ent/generated/pubsubhooks"
 	"go.infratographer.com/tenant-api/internal/graphapi"
 	"go.infratographer.com/tenant-api/internal/graphclient"
+	"go.infratographer.com/tenant-api/internal/pubsub"
 	"go.infratographer.com/tenant-api/x/testcontainersx"
 )
 
 var (
-	TestDBURI   = os.Getenv("TENANTAPI_TESTDB_URI")
-	EntClient   *ent.Client
-	DBContainer *testcontainersx.DBContainer
+	TestDBURI      = os.Getenv("TENANTAPI_TESTDB_URI")
+	EntClient      *ent.Client
+	DBContainer    *testcontainersx.DBContainer
+	DBURI          string
+	NatsTestClient *pubsub.Client
 )
 
 func TestMain(m *testing.M) {
@@ -85,9 +91,21 @@ func setupDB() {
 
 	ctx := context.Background()
 
+	ns, err := pubsub.StartNatsServer()
+	if err != nil {
+		errPanic("failed to start nats server", err)
+	}
+
+	natsClient, err := newNatsClient(ns)
+	if err != nil {
+		errPanic("failed to generate nats client", err)
+	}
+
+	NatsTestClient = natsClient
+
 	dia, uri, cntr := parseDBURI(ctx)
 
-	c, err := ent.Open(dia, uri, ent.Debug())
+	c, err := ent.Open(dia, uri, ent.Debug(), ent.PubsubClient(natsClient))
 	if err != nil {
 		errPanic("failed terminating test db container after failing to connect to the db", cntr.Container.Terminate(ctx))
 		errPanic("failed opening connection to database:", err)
@@ -103,6 +121,13 @@ func setupDB() {
 	}
 
 	EntClient = c
+}
+
+func entClientWithPubsubHooks() *ent.Client {
+	newClient := EntClient
+	pubsubhooks.PubsubHooks(newClient)
+
+	return newClient
 }
 
 func teardownDB() {
@@ -123,10 +148,10 @@ func errPanic(msg string, err error) {
 	}
 }
 
-func graphTestClient() graphclient.GraphClient {
+func graphTestClient(entClient *ent.Client) graphclient.GraphClient {
 	return graphclient.NewClient(&http.Client{Transport: localRoundTripper{handler: handler.NewDefaultServer(
 		graphapi.NewExecutableSchema(
-			graphapi.Config{Resolvers: graphapi.NewResolver(EntClient, zap.NewNop().Sugar())},
+			graphapi.Config{Resolvers: graphapi.NewResolver(entClient, zap.NewNop().Sugar())},
 		))}}, "graph")
 }
 
@@ -136,9 +161,41 @@ type localRoundTripper struct {
 	handler http.Handler
 }
 
-func (l localRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+func (l localRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
+	// set the actor to "testing-roundtrip-actor"
+	req := r.WithContext(context.WithValue(r.Context(), echojwtx.ActorKey, "testing-roundtrip-actor"))
 	l.handler.ServeHTTP(w, req)
 
 	return w.Result(), nil
+}
+
+func newNatsClient(srv *natssrv.Server) (*pubsub.Client, error) {
+	nc, err := nats.Connect(srv.ClientURL())
+	if err != nil {
+		// errPanic("teardown failed to terminate test db container", DBContainer.Container.Terminate(ctx))
+		return &pubsub.Client{}, err
+	}
+
+	js, err := nc.JetStream()
+	if err != nil {
+		return &pubsub.Client{}, err
+	}
+
+	_, err = js.AddStream(&nats.StreamConfig{
+		Name:     "tenant-api",
+		Subjects: []string{"com.infratographer.events.>", "com.infratographer.changes.>"},
+	})
+	if err != nil {
+		return &pubsub.Client{}, err
+	}
+
+	client := pubsub.NewClient(pubsub.WithJetreamContext(js),
+		pubsub.WithLogger(zap.NewNop().Sugar()),
+		pubsub.WithStreamName("tenant-api"),
+		pubsub.WithSubjectPrefix("com.infratographer"),
+		pubsub.WithSource("tenant-api-test"),
+	)
+
+	return client, nil
 }

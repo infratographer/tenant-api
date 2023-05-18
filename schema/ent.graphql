@@ -34,7 +34,7 @@ enum OrderDirection {
 Information about pagination in a connection.
 https://relay.dev/graphql/connections.htm#sec-undefined.PageInfo
 """
-type PageInfo {
+type PageInfo @shareable {
   """When paginating forwards, are there more items?"""
   hasNextPage: Boolean!
   """When paginating backwards, are there more items?"""
@@ -45,7 +45,7 @@ type PageInfo {
   endCursor: Cursor
 }
 type Query
-type Tenant implements Node & ResourceContainer & MetadataNode @key(fields: "id") @prefixedID(prefix: "tnntten") {
+type Tenant implements Node & ResourceOwner & MetadataNode @key(fields: "id") @prefixedID(prefix: "tnntten") @infratographerRoles(hasRoles: "true", hasParentRoles: "true") {
   """ID for the tenant."""
   id: ID!
   createdAt: Time!

@@ -4,10 +4,23 @@ package graphapi
 
 import (
 	"go.infratographer.com/tenant-api/internal/ent/generated"
+	"go.infratographer.com/x/gidx"
 )
 
-// Return response from tenantCreate
+// Return response from tenantCreate.
 type TenantCreatePayload struct {
 	// The created tenant.
+	Tenant *generated.Tenant `json:"tenant"`
+}
+
+// Return response from tenantDelete.
+type TenantDeletePayload struct {
+	// The ID of the deleted tenant.
+	DeletedID gidx.PrefixedID `json:"deletedID"`
+}
+
+// Return response from tenantUpdate.
+type TenantUpdatePayload struct {
+	// The updated tenant.
 	Tenant *generated.Tenant `json:"tenant"`
 }

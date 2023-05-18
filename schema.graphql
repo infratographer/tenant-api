@@ -1,5 +1,6 @@
 directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 directive @goModel(model: String, models: [String!]) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
+directive @infratographerRoles(hasRoles: Boolean!, hasParentRoles: Boolean!) on OBJECT
 directive @prefixedID(prefix: String!) on OBJECT
 """Input information to create a tenant."""
 input CreateTenantInput {
@@ -20,8 +21,12 @@ interface MetadataNode {
 	id: ID!
 }
 type Mutation {
-	"""Create a Tenant."""
+	"""Create a tenant."""
 	tenantCreate(input: CreateTenantInput!): TenantCreatePayload!
+	"""Update a tenant."""
+	tenantUpdate(id: ID!, input: UpdateTenantInput!): TenantUpdatePayload!
+	"""Delete a tenant."""
+	tenantDelete(id: ID!): TenantDeletePayload!
 }
 """
 An object with an ID.
@@ -42,7 +47,7 @@ enum OrderDirection {
 Information about pagination in a connection.
 https://relay.dev/graphql/connections.htm#sec-undefined.PageInfo
 """
-type PageInfo {
+type PageInfo @shareable {
 	"""When paginating forwards, are there more items?"""
 	hasNextPage: Boolean!
 	"""When paginating backwards, are there more items?"""
@@ -61,10 +66,10 @@ type Query {
 	_entities(representations: [_Any!]!): [_Entity]!
 	_service: _Service!
 }
-interface ResourceContainer {
+interface ResourceOwner {
 	id: ID!
 }
-type Tenant implements Node & ResourceContainer & MetadataNode @key(fields: "id") @prefixedID(prefix: "tnntten") {
+type Tenant implements Node & ResourceOwner & MetadataNode @key(fields: "id") @prefixedID(prefix: "tnntten") @infratographerRoles(hasRoles: "true", hasParentRoles: "true") {
 	"""ID for the tenant."""
 	id: ID!
 	createdAt: Time!
@@ -103,10 +108,15 @@ type TenantConnection {
 	"""Identifies the total count of items in the connection."""
 	totalCount: Int!
 }
-"""Return response from tenantCreate"""
+"""Return response from tenantCreate."""
 type TenantCreatePayload {
 	"""The created tenant."""
 	tenant: Tenant!
+}
+"""Return response from tenantDelete."""
+type TenantDeletePayload {
+	"""The ID of the deleted tenant."""
+	deletedID: ID!
 }
 """An edge in a connection."""
 type TenantEdge {
@@ -127,6 +137,11 @@ enum TenantOrderField {
 	CREATED_AT
 	UPDATED_AT
 	NAME
+}
+"""Return response from tenantUpdate."""
+type TenantUpdatePayload {
+	"""The updated tenant."""
+	tenant: Tenant!
 }
 """
 TenantWhereInput is used for filtering Tenant objects.

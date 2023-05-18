@@ -21,7 +21,7 @@ type MetadataNode interface {
 	IsEntity()
 }
 
-type ResourceContainer interface {
-	IsResourceContainer()
+type ResourceOwner interface {
+	IsResourceOwner()
 	IsEntity()
 }

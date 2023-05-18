@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.infratographer.com/x/gidx"
@@ -37,7 +38,7 @@ func TestTenantQueryByID(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.TestName, func(t *testing.T) {
-			resp, err := graphTestClient().GetTenant(ctx, tt.ID)
+			resp, err := graphTestClient(EntClient).GetTenant(ctx, tt.ID)
 
 			if tt.errorMsg != "" {
 				assert.Error(t, err)
@@ -129,7 +130,7 @@ func TestTenantChildrenSorting(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.TestName, func(t *testing.T) {
-			resp, err := graphTestClient().GetTenantChildren(ctx, tt.TenantID, tt.OrderBy)
+			resp, err := graphTestClient(EntClient).GetTenantChildren(ctx, tt.TenantID, tt.OrderBy)
 
 			if tt.errorMsg != "" {
 				assert.Error(t, err)
@@ -191,7 +192,7 @@ func TestTenantChildrenWhereFiltering(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.TestName, func(t *testing.T) {
-			resp, err := graphTestClient().GetTenantChildByID(ctx, tt.TenantID, tt.ChildID)
+			resp, err := graphTestClient(EntClient).GetTenantChildByID(ctx, tt.TenantID, tt.ChildID)
 
 			if tt.errorMsg != "" {
 				assert.Error(t, err)
@@ -213,4 +214,99 @@ func TestTenantChildrenWhereFiltering(t *testing.T) {
 			assert.Equal(t, tt.ResponseChild.Name, resp.Tenant.Children.Edges[0].Node.Name)
 		})
 	}
+}
+
+func TestFullTenantLifecycle(t *testing.T) {
+	ctx := context.Background()
+
+	name := gofakeit.DomainName()
+	description := gofakeit.Phrase()
+
+	graphC := graphTestClient(EntClient)
+
+	// create the Root tenant
+	rootResp, err := graphC.TenantCreate(ctx, graphclient.CreateTenantInput{
+		Name:        name,
+		Description: &description,
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, rootResp)
+	require.NotNil(t, rootResp.TenantCreate.Tenant)
+
+	rootTenant := rootResp.TenantCreate.Tenant
+	assert.NotNil(t, rootTenant.ID)
+	assert.Equal(t, name, rootTenant.Name)
+	assert.Equal(t, &description, rootTenant.Description)
+	assert.Equal(t, "tnntten", rootTenant.ID.Prefix())
+	assert.Nil(t, rootTenant.Parent)
+
+	// Update the tenant
+	newName := gofakeit.DomainName()
+	updatedTenantResp, err := graphC.TenantUpdate(ctx, rootTenant.ID, graphclient.UpdateTenantInput{Name: &newName})
+
+	require.NoError(t, err)
+	require.NotNil(t, updatedTenantResp)
+	require.NotNil(t, updatedTenantResp.TenantUpdate.Tenant)
+
+	updatedRootTenant := updatedTenantResp.TenantUpdate.Tenant
+	assert.EqualValues(t, rootTenant.ID, updatedRootTenant.ID)
+	assert.Equal(t, newName, updatedRootTenant.Name)
+
+	// Query the tenant
+	queryRootResp, err := graphC.GetTenant(ctx, rootTenant.ID)
+	require.NoError(t, err)
+	require.NotNil(t, queryRootResp)
+	require.NotNil(t, queryRootResp.Tenant)
+	require.Equal(t, newName, queryRootResp.Tenant.Name)
+
+	// Add a child tenant with no description
+	childResp, err := graphC.TenantCreate(ctx, graphclient.CreateTenantInput{
+		Name:     "child",
+		ParentID: &rootTenant.ID,
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, childResp)
+	require.NotNil(t, childResp.TenantCreate.Tenant)
+
+	childTenant := childResp.TenantCreate.Tenant
+	assert.NotNil(t, childTenant.ID)
+	assert.Equal(t, "child", childTenant.Name)
+	assert.Empty(t, childTenant.Description)
+	assert.Equal(t, "tnntten", childTenant.ID.Prefix())
+	assert.NotNil(t, childTenant.Parent)
+	assert.Equal(t, rootTenant.ID, childTenant.Parent.ID)
+
+	// Try to delete the root tenant, it should fail since there are children
+	deletedResp, err := graphC.TenantDelete(ctx, rootTenant.ID)
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "tenant has children")
+	assert.Nil(t, deletedResp)
+
+	// delete the child tenant
+	deletedResp, err = graphC.TenantDelete(ctx, childTenant.ID)
+	require.NoError(t, err)
+	require.NotNil(t, deletedResp)
+	require.NotNil(t, deletedResp.TenantDelete)
+	assert.EqualValues(t, childTenant.ID, deletedResp.TenantDelete.DeletedID.String())
+
+	// delete the root tenant
+	deletedResp, err = graphC.TenantDelete(ctx, rootTenant.ID)
+	require.NoError(t, err)
+	require.NotNil(t, deletedResp)
+	require.NotNil(t, deletedResp.TenantDelete)
+	assert.EqualValues(t, rootTenant.ID, deletedResp.TenantDelete.DeletedID.String())
+
+	// Query the deleted root tenant to ensure it's no longer available
+	queryResp, err := graphC.GetTenant(ctx, rootTenant.ID)
+	assert.Error(t, err)
+	assert.Nil(t, queryResp)
+	assert.ErrorContains(t, err, "tenant not found")
+
+	// Query the deleted tenant's child to ensure it's no longer available as well
+	queryResp, err = graphC.GetTenant(ctx, childTenant.ID)
+	assert.Error(t, err)
+	assert.Nil(t, queryResp)
+	assert.ErrorContains(t, err, "tenant not found")
 }

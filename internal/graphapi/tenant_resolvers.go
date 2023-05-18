@@ -6,10 +6,11 @@ package graphapi
 
 import (
 	"context"
-
-	"go.infratographer.com/x/gidx"
+	"fmt"
 
 	"go.infratographer.com/tenant-api/internal/ent/generated"
+	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
+	"go.infratographer.com/x/gidx"
 )
 
 // TenantCreate is the resolver for the tenantCreate field.
@@ -26,6 +27,35 @@ func (r *mutationResolver) TenantCreate(ctx context.Context, input generated.Cre
 	}
 
 	return &TenantCreatePayload{Tenant: tnt}, nil
+}
+
+// TenantUpdate is the resolver for the tenantUpdate field.
+func (r *mutationResolver) TenantUpdate(ctx context.Context, id gidx.PrefixedID, input generated.UpdateTenantInput) (*TenantUpdatePayload, error) {
+	// TODO: auth check
+	tnt, err := r.client.Tenant.UpdateOneID(id).SetInput(input).Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &TenantUpdatePayload{Tenant: tnt}, nil
+}
+
+// TenantDelete is the resolver for the tenantDelete field.
+func (r *mutationResolver) TenantDelete(ctx context.Context, id gidx.PrefixedID) (*TenantDeletePayload, error) {
+	// TODO: auth check
+	childrenCount, err := r.client.Tenant.Query().Where(tenant.ParentTenantID(id)).Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if childrenCount != 0 {
+		return nil, fmt.Errorf("tenant has children and can't be deleted")
+	}
+
+	if err := r.client.Tenant.DeleteOneID(id).Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return &TenantDeletePayload{DeletedID: id}, nil
 }
 
 // Tenant is the resolver for the tenant field.

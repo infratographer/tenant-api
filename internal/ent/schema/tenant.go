@@ -15,6 +15,8 @@
 package schema
 
 import (
+	"strconv"
+
 	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
 	"entgo.io/ent/schema"
@@ -23,6 +25,8 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 	"go.infratographer.com/x/entx"
 	"go.infratographer.com/x/gidx"
+
+	"go.infratographer.com/tenant-api/x/pubsubhooks"
 )
 
 // Tenant holds the schema definition for the Tenant entity.
@@ -66,6 +70,7 @@ func (Tenant) Fields() []ent.Field {
 			Annotations(
 				entgql.Type("ID"),
 				entgql.Skip(entgql.SkipWhereInput, entgql.SkipMutationUpdateInput, entgql.SkipType),
+				pubsubhooks.AdditionalSubject(),
 			),
 	}
 }
@@ -95,9 +100,11 @@ func (Tenant) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entx.GraphKeyDirective("id"),
 		prefixIDDirective(TenantPrefix),
+		rolesDirective(true, true),
+		pubsubhooks.Annotation{SubjectName: "tenant"},
 		entgql.RelayConnection(),
 		schema.Comment("Representation of a tenant."),
-		entgql.Implements("ResourceContainer"),
+		entgql.Implements("ResourceOwner"),
 		entgql.Implements("MetadataNode"),
 		entgql.Mutations(
 			entgql.MutationCreate().Description("Input information to create a tenant."),
@@ -119,4 +126,25 @@ func prefixIDDirective(prefix string) entgql.Annotation {
 	}
 
 	return entgql.Directives(entgql.NewDirective("prefixedID", args...))
+}
+
+func rolesDirective(hasRoles bool, hasParentRoles bool) entgql.Annotation {
+	args := []*ast.Argument{
+		{
+			Name: "hasRoles",
+			Value: &ast.Value{
+				Raw:  strconv.FormatBool(hasRoles),
+				Kind: ast.StringValue,
+			},
+		},
+		{
+			Name: "hasParentRoles",
+			Value: &ast.Value{
+				Raw:  strconv.FormatBool(hasParentRoles),
+				Kind: ast.StringValue,
+			},
+		},
+	}
+
+	return entgql.Directives(entgql.NewDirective("infratographerRoles", args...))
 }

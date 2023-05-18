@@ -3,8 +3,8 @@
     // IsMetadataNode implements interface for MetadataNode
     func ({{ $.Receiver }} {{ $.Name }}) IsMetadataNode() {}
 
-    // IsResourceContainer implements interface for ResourceContainer
-    func ({{ $.Receiver }} {{ $.Name }}) IsResourceContainer() {}
+    // IsResourceOwner implements interface for ResourceOwner
+    func ({{ $.Receiver }} {{ $.Name }}) IsResourceOwner() {}
   {{ end }}
 {{ end }}
 
@@ -17,8 +17,8 @@ type MetadataNode interface {
   IsEntity()
 }
 
-type ResourceContainer interface {
-	IsResourceContainer()
+type ResourceOwner interface {
+	IsResourceOwner()
   IsEntity()
 }
 {{ end }}

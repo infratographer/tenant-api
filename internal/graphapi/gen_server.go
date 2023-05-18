@@ -55,6 +55,8 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		TenantCreate func(childComplexity int, input generated.CreateTenantInput) int
+		TenantDelete func(childComplexity int, id gidx.PrefixedID) int
+		TenantUpdate func(childComplexity int, id gidx.PrefixedID, input generated.UpdateTenantInput) int
 	}
 
 	PageInfo struct {
@@ -90,9 +92,17 @@ type ComplexityRoot struct {
 		Tenant func(childComplexity int) int
 	}
 
+	TenantDeletePayload struct {
+		DeletedID func(childComplexity int) int
+	}
+
 	TenantEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	TenantUpdatePayload struct {
+		Tenant func(childComplexity int) int
 	}
 
 	_Service struct {
@@ -105,6 +115,8 @@ type EntityResolver interface {
 }
 type MutationResolver interface {
 	TenantCreate(ctx context.Context, input generated.CreateTenantInput) (*TenantCreatePayload, error)
+	TenantUpdate(ctx context.Context, id gidx.PrefixedID, input generated.UpdateTenantInput) (*TenantUpdatePayload, error)
+	TenantDelete(ctx context.Context, id gidx.PrefixedID) (*TenantDeletePayload, error)
 }
 type QueryResolver interface {
 	Tenant(ctx context.Context, id gidx.PrefixedID) (*generated.Tenant, error)
@@ -148,6 +160,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.TenantCreate(childComplexity, args["input"].(generated.CreateTenantInput)), true
+
+	case "Mutation.tenantDelete":
+		if e.complexity.Mutation.TenantDelete == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_tenantDelete_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.TenantDelete(childComplexity, args["id"].(gidx.PrefixedID)), true
+
+	case "Mutation.tenantUpdate":
+		if e.complexity.Mutation.TenantUpdate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_tenantUpdate_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.TenantUpdate(childComplexity, args["id"].(gidx.PrefixedID), args["input"].(generated.UpdateTenantInput)), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -290,6 +326,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TenantCreatePayload.Tenant(childComplexity), true
 
+	case "TenantDeletePayload.deletedID":
+		if e.complexity.TenantDeletePayload.DeletedID == nil {
+			break
+		}
+
+		return e.complexity.TenantDeletePayload.DeletedID(childComplexity), true
+
 	case "TenantEdge.cursor":
 		if e.complexity.TenantEdge.Cursor == nil {
 			break
@@ -303,6 +346,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TenantEdge.Node(childComplexity), true
+
+	case "TenantUpdatePayload.tenant":
+		if e.complexity.TenantUpdatePayload.Tenant == nil {
+			break
+		}
+
+		return e.complexity.TenantUpdatePayload.Tenant(childComplexity), true
 
 	case "_Service.sdl":
 		if e.complexity._Service.SDL == nil {
@@ -419,7 +469,7 @@ enum OrderDirection {
 Information about pagination in a connection.
 https://relay.dev/graphql/connections.htm#sec-undefined.PageInfo
 """
-type PageInfo {
+type PageInfo @shareable {
   """When paginating forwards, are there more items?"""
   hasNextPage: Boolean!
   """When paginating backwards, are there more items?"""
@@ -430,7 +480,7 @@ type PageInfo {
   endCursor: Cursor
 }
 type Query
-type Tenant implements Node & ResourceContainer & MetadataNode @key(fields: "id") @prefixedID(prefix: "tnntten") {
+type Tenant implements Node & ResourceOwner & MetadataNode @key(fields: "id") @prefixedID(prefix: "tnntten") @infratographerRoles(hasRoles: "true", hasParentRoles: "true") {
   """ID for the tenant."""
   id: ID!
   createdAt: Time!
@@ -543,8 +593,9 @@ input UpdateTenantInput {
 }
 `, BuiltIn: false},
 	{Name: "../../schema/tenant.graphql", Input: `directive @prefixedID(prefix: String!) on OBJECT
+directive @infratographerRoles(hasRoles: Boolean!, hasParentRoles: Boolean!) on OBJECT
 
-interface ResourceContainer {
+interface ResourceOwner {
   id: ID!
 }
 
@@ -566,21 +617,52 @@ extend type Query {
 
 extend type Mutation {
   """
-  Create a Tenant.
+  Create a tenant.
   """
   tenantCreate(
     input: CreateTenantInput!
   ): TenantCreatePayload!
+   """
+  Update a tenant.
+  """
+  tenantUpdate(
+    id: ID!
+    input: UpdateTenantInput!
+  ): TenantUpdatePayload!
+  """
+  Delete a tenant.
+  """
+  tenantDelete(id: ID!): TenantDeletePayload!
 }
 
 """
-Return response from tenantCreate
+Return response from tenantCreate.
 """
 type TenantCreatePayload {
   """
   The created tenant.
   """
   tenant: Tenant!
+}
+
+"""
+Return response from tenantUpdate.
+"""
+type TenantUpdatePayload {
+  """
+  The updated tenant.
+  """
+  tenant: Tenant!
+}
+
+"""
+Return response from tenantDelete.
+"""
+type TenantDeletePayload {
+  """
+  The ID of the deleted tenant.
+  """
+  deletedID: ID!
 }
 `, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
@@ -651,6 +733,45 @@ func (ec *executionContext) field_Mutation_tenantCreate_args(ctx context.Context
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_tenantDelete_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 gidx.PrefixedID
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2goᚗinfratographerᚗcomᚋxᚋgidxᚐPrefixedID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_tenantUpdate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 gidx.PrefixedID
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2goᚗinfratographerᚗcomᚋxᚋgidxᚐPrefixedID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 generated.UpdateTenantInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNUpdateTenantInput2goᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋentᚋgeneratedᚐUpdateTenantInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -921,6 +1042,124 @@ func (ec *executionContext) fieldContext_Mutation_tenantCreate(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_tenantCreate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_tenantUpdate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_tenantUpdate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().TenantUpdate(rctx, fc.Args["id"].(gidx.PrefixedID), fc.Args["input"].(generated.UpdateTenantInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*TenantUpdatePayload)
+	fc.Result = res
+	return ec.marshalNTenantUpdatePayload2ᚖgoᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋgraphapiᚐTenantUpdatePayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_tenantUpdate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "tenant":
+				return ec.fieldContext_TenantUpdatePayload_tenant(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TenantUpdatePayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_tenantUpdate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_tenantDelete(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_tenantDelete(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().TenantDelete(rctx, fc.Args["id"].(gidx.PrefixedID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*TenantDeletePayload)
+	fc.Result = res
+	return ec.marshalNTenantDeletePayload2ᚖgoᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋgraphapiᚐTenantDeletePayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_tenantDelete(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedID":
+				return ec.fieldContext_TenantDeletePayload_deletedID(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TenantDeletePayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_tenantDelete_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -1942,6 +2181,50 @@ func (ec *executionContext) fieldContext_TenantCreatePayload_tenant(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _TenantDeletePayload_deletedID(ctx context.Context, field graphql.CollectedField, obj *TenantDeletePayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TenantDeletePayload_deletedID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gidx.PrefixedID)
+	fc.Result = res
+	return ec.marshalNID2goᚗinfratographerᚗcomᚋxᚋgidxᚐPrefixedID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TenantDeletePayload_deletedID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TenantDeletePayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TenantEdge_node(ctx context.Context, field graphql.CollectedField, obj *generated.TenantEdge) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TenantEdge_node(ctx, field)
 	if err != nil {
@@ -2038,6 +2321,66 @@ func (ec *executionContext) fieldContext_TenantEdge_cursor(ctx context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Cursor does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TenantUpdatePayload_tenant(ctx context.Context, field graphql.CollectedField, obj *TenantUpdatePayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TenantUpdatePayload_tenant(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Tenant, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*generated.Tenant)
+	fc.Result = res
+	return ec.marshalNTenant2ᚖgoᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋentᚋgeneratedᚐTenant(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TenantUpdatePayload_tenant(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TenantUpdatePayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Tenant_id(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Tenant_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Tenant_updatedAt(ctx, field)
+			case "name":
+				return ec.fieldContext_Tenant_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Tenant_description(ctx, field)
+			case "parent":
+				return ec.fieldContext_Tenant_parent(ctx, field)
+			case "children":
+				return ec.fieldContext_Tenant_children(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Tenant", field.Name)
 		},
 	}
 	return fc, nil
@@ -4326,7 +4669,7 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 	}
 }
 
-func (ec *executionContext) _ResourceContainer(ctx context.Context, sel ast.SelectionSet, obj generated.ResourceContainer) graphql.Marshaler {
+func (ec *executionContext) _ResourceOwner(ctx context.Context, sel ast.SelectionSet, obj generated.ResourceOwner) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
@@ -4438,6 +4781,24 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_tenantCreate(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "tenantUpdate":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_tenantUpdate(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "tenantDelete":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_tenantDelete(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
@@ -4608,7 +4969,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
-var tenantImplementors = []string{"Tenant", "Node", "ResourceContainer", "MetadataNode", "_Entity"}
+var tenantImplementors = []string{"Tenant", "Node", "ResourceOwner", "MetadataNode", "_Entity"}
 
 func (ec *executionContext) _Tenant(ctx context.Context, sel ast.SelectionSet, obj *generated.Tenant) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, tenantImplementors)
@@ -4765,6 +5126,34 @@ func (ec *executionContext) _TenantCreatePayload(ctx context.Context, sel ast.Se
 	return out
 }
 
+var tenantDeletePayloadImplementors = []string{"TenantDeletePayload"}
+
+func (ec *executionContext) _TenantDeletePayload(ctx context.Context, sel ast.SelectionSet, obj *TenantDeletePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tenantDeletePayloadImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TenantDeletePayload")
+		case "deletedID":
+
+			out.Values[i] = ec._TenantDeletePayload_deletedID(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var tenantEdgeImplementors = []string{"TenantEdge"}
 
 func (ec *executionContext) _TenantEdge(ctx context.Context, sel ast.SelectionSet, obj *generated.TenantEdge) graphql.Marshaler {
@@ -4782,6 +5171,34 @@ func (ec *executionContext) _TenantEdge(ctx context.Context, sel ast.SelectionSe
 		case "cursor":
 
 			out.Values[i] = ec._TenantEdge_cursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var tenantUpdatePayloadImplementors = []string{"TenantUpdatePayload"}
+
+func (ec *executionContext) _TenantUpdatePayload(ctx context.Context, sel ast.SelectionSet, obj *TenantUpdatePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tenantUpdatePayloadImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TenantUpdatePayload")
+		case "tenant":
+
+			out.Values[i] = ec._TenantUpdatePayload_tenant(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -5262,6 +5679,20 @@ func (ec *executionContext) marshalNTenantCreatePayload2ᚖgoᚗinfratographer�
 	return ec._TenantCreatePayload(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNTenantDeletePayload2goᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋgraphapiᚐTenantDeletePayload(ctx context.Context, sel ast.SelectionSet, v TenantDeletePayload) graphql.Marshaler {
+	return ec._TenantDeletePayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTenantDeletePayload2ᚖgoᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋgraphapiᚐTenantDeletePayload(ctx context.Context, sel ast.SelectionSet, v *TenantDeletePayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TenantDeletePayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNTenantOrderField2ᚖgoᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋentᚋgeneratedᚐTenantOrderField(ctx context.Context, v interface{}) (*generated.TenantOrderField, error) {
 	var res = new(generated.TenantOrderField)
 	err := res.UnmarshalGQL(v)
@@ -5276,6 +5707,20 @@ func (ec *executionContext) marshalNTenantOrderField2ᚖgoᚗinfratographerᚗco
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) marshalNTenantUpdatePayload2goᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋgraphapiᚐTenantUpdatePayload(ctx context.Context, sel ast.SelectionSet, v TenantUpdatePayload) graphql.Marshaler {
+	return ec._TenantUpdatePayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTenantUpdatePayload2ᚖgoᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋgraphapiᚐTenantUpdatePayload(ctx context.Context, sel ast.SelectionSet, v *TenantUpdatePayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TenantUpdatePayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNTenantWhereInput2ᚖgoᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋentᚋgeneratedᚐTenantWhereInput(ctx context.Context, v interface{}) (*generated.TenantWhereInput, error) {
@@ -5296,6 +5741,11 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNUpdateTenantInput2goᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋentᚋgeneratedᚐUpdateTenantInput(ctx context.Context, v interface{}) (generated.UpdateTenantInput, error) {
+	res, err := ec.unmarshalInputUpdateTenantInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalN_Any2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {

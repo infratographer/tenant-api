@@ -2,7 +2,6 @@ version: "3.9"
 
 volumes:
   crdb: null
-  audit: null
 
 services:
   app:
@@ -19,7 +18,6 @@ services:
     volumes:
       - ../..:/workspaces:cached
       - ./nsc:/nsc
-      - audit:/app-audit
       # uncomment to use local SSH keys for dev container access
       #- type: bind
       #  source: ~/.ssh/authorized_keys
@@ -30,7 +28,7 @@ services:
       - nats
     # Use "forwardPorts" in **devcontainer.json** to forward a port locally.
 
-  # Environment setup
+    # Environment setup
   create_databases:
     image: cockroachdb/cockroach:latest-v22.2
     restart: on-failure:5
@@ -39,35 +37,6 @@ services:
       - .env
     depends_on:
       - crdb
-
-  fix-perms-audit:
-    image: alpine:3.18
-    command:
-      - ash
-      - -c
-      - |
-        chown -R 1000:1000 /app-audit
-    volumes:
-      - audit:/app-audit
-
-  init-audit:
-    image: ghcr.io/metal-toolbox/audittail:v0.8.0
-    command: init -f /app-audit/audit.log
-    user: 1000:1000
-    depends_on:
-      - fix-perms-audit
-    volumes:
-      - audit:/app-audit
-
-  audit:
-    image: ghcr.io/metal-toolbox/audittail:v0.8.0
-    command: -f /app-audit/audit.log
-    user: 1000:1000
-    depends_on:
-      - init-audit
-    volumes:
-      - audit:/app-audit
-    restart: unless-stopped
 
   # Required services (databases, etc)
   crdb:

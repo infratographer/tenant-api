@@ -16,6 +16,8 @@ type GraphClient interface {
 	GetTenantChildByID(ctx context.Context, id gidx.PrefixedID, childID gidx.PrefixedID, httpRequestOptions ...client.HTTPRequestOption) (*GetTenantChildByID, error)
 	GetTenantChildren(ctx context.Context, id gidx.PrefixedID, orderBy *TenantOrder, httpRequestOptions ...client.HTTPRequestOption) (*GetTenantChildren, error)
 	TenantCreate(ctx context.Context, input CreateTenantInput, httpRequestOptions ...client.HTTPRequestOption) (*TenantCreate, error)
+	TenantDelete(ctx context.Context, id gidx.PrefixedID, httpRequestOptions ...client.HTTPRequestOption) (*TenantDelete, error)
+	TenantUpdate(ctx context.Context, id gidx.PrefixedID, input UpdateTenantInput, httpRequestOptions ...client.HTTPRequestOption) (*TenantUpdate, error)
 }
 
 type Client struct {
@@ -33,6 +35,8 @@ type Query struct {
 }
 type Mutation struct {
 	TenantCreate TenantCreatePayload "json:\"tenantCreate\" graphql:\"tenantCreate\""
+	TenantUpdate TenantUpdatePayload "json:\"tenantUpdate\" graphql:\"tenantUpdate\""
+	TenantDelete TenantDeletePayload "json:\"tenantDelete\" graphql:\"tenantDelete\""
 }
 type GetTenant struct {
 	Tenant struct {
@@ -84,6 +88,23 @@ type TenantCreate struct {
 			} "json:\"parent\" graphql:\"parent\""
 		} "json:\"tenant\" graphql:\"tenant\""
 	} "json:\"tenantCreate\" graphql:\"tenantCreate\""
+}
+type TenantDelete struct {
+	TenantDelete struct {
+		DeletedID gidx.PrefixedID "json:\"deletedID\" graphql:\"deletedID\""
+	} "json:\"tenantDelete\" graphql:\"tenantDelete\""
+}
+type TenantUpdate struct {
+	TenantUpdate struct {
+		Tenant struct {
+			ID          gidx.PrefixedID "json:\"id\" graphql:\"id\""
+			Name        string          "json:\"name\" graphql:\"name\""
+			Description *string         "json:\"description\" graphql:\"description\""
+			Parent      *struct {
+				ID gidx.PrefixedID "json:\"id\" graphql:\"id\""
+			} "json:\"parent\" graphql:\"parent\""
+		} "json:\"tenant\" graphql:\"tenant\""
+	} "json:\"tenantUpdate\" graphql:\"tenantUpdate\""
 }
 
 const GetTenantDocument = `query GetTenant ($id: ID!) {
@@ -193,6 +214,54 @@ func (c *Client) TenantCreate(ctx context.Context, input CreateTenantInput, http
 
 	var res TenantCreate
 	if err := c.Client.Post(ctx, "TenantCreate", TenantCreateDocument, &res, vars, httpRequestOptions...); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+const TenantDeleteDocument = `mutation TenantDelete ($id: ID!) {
+	tenantDelete(id: $id) {
+		deletedID
+	}
+}
+`
+
+func (c *Client) TenantDelete(ctx context.Context, id gidx.PrefixedID, httpRequestOptions ...client.HTTPRequestOption) (*TenantDelete, error) {
+	vars := map[string]interface{}{
+		"id": id,
+	}
+
+	var res TenantDelete
+	if err := c.Client.Post(ctx, "TenantDelete", TenantDeleteDocument, &res, vars, httpRequestOptions...); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+const TenantUpdateDocument = `mutation TenantUpdate ($id: ID!, $input: UpdateTenantInput!) {
+	tenantUpdate(id: $id, input: $input) {
+		tenant {
+			id
+			name
+			description
+			parent {
+				id
+			}
+		}
+	}
+}
+`
+
+func (c *Client) TenantUpdate(ctx context.Context, id gidx.PrefixedID, input UpdateTenantInput, httpRequestOptions ...client.HTTPRequestOption) (*TenantUpdate, error) {
+	vars := map[string]interface{}{
+		"id":    id,
+		"input": input,
+	}
+
+	var res TenantUpdate
+	if err := c.Client.Post(ctx, "TenantUpdate", TenantUpdateDocument, &res, vars, httpRequestOptions...); err != nil {
 		return nil, err
 	}
 

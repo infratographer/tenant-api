@@ -52,3 +52,22 @@ mutation TenantCreate($input: CreateTenantInput!) {
     }
   }
 }
+
+mutation TenantUpdate($id: ID!, $input: UpdateTenantInput!) {
+  tenantUpdate(id: $id, input: $input) {
+    tenant {
+      id
+      name
+      description
+      parent {
+        id
+      }
+    }
+  }
+}
+
+mutation TenantDelete($id: ID!) {
+  tenantDelete(id: $id) {
+    deletedID
+  }
+}

@@ -24,8 +24,8 @@ type Node interface {
 	GetID() gidx.PrefixedID
 }
 
-type ResourceContainer interface {
-	IsResourceContainer()
+type ResourceOwner interface {
+	IsResourceOwner()
 	GetID() gidx.PrefixedID
 }
 
@@ -75,7 +75,7 @@ func (Tenant) IsNode() {}
 
 // The id of the object.
 
-func (Tenant) IsResourceContainer() {}
+func (Tenant) IsResourceOwner() {}
 
 func (Tenant) IsEntity() {}
 
@@ -89,10 +89,16 @@ type TenantConnection struct {
 	TotalCount int64 `json:"totalCount"`
 }
 
-// Return response from tenantCreate
+// Return response from tenantCreate.
 type TenantCreatePayload struct {
 	// The created tenant.
 	Tenant Tenant `json:"tenant"`
+}
+
+// Return response from tenantDelete.
+type TenantDeletePayload struct {
+	// The ID of the deleted tenant.
+	DeletedID gidx.PrefixedID `json:"deletedID"`
 }
 
 // An edge in a connection.
@@ -109,6 +115,12 @@ type TenantOrder struct {
 	Direction OrderDirection `json:"direction"`
 	// The field by which to order Tenants.
 	Field TenantOrderField `json:"field"`
+}
+
+// Return response from tenantUpdate.
+type TenantUpdatePayload struct {
+	// The updated tenant.
+	Tenant Tenant `json:"tenant"`
 }
 
 // TenantWhereInput is used for filtering Tenant objects.

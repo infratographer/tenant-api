@@ -78,7 +78,7 @@ func (h *Handler) Handler() http.HandlerFunc {
 // Routes ...
 func (h *Handler) Routes(e *echo.Group) {
 	e.Use(h.middleware...)
-	e.POST("/"+graphPath, h.graphRequest)
+	e.POST(graphFullPath, h.graphRequest)
 
 	if h.playground != nil {
 		handlers, err := h.playground.Handlers()

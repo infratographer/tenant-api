@@ -218,8 +218,8 @@ func (t Tenant) IsEntity() {}
 // IsMetadataNode implements interface for MetadataNode
 func (t Tenant) IsMetadataNode() {}
 
-// IsResourceContainer implements interface for ResourceContainer
-func (t Tenant) IsResourceContainer() {}
+// IsResourceOwner implements interface for ResourceOwner
+func (t Tenant) IsResourceOwner() {}
 
 // NamedChildren returns the Children named value or an error if the edge was not
 // loaded in eager-loading with this name.
