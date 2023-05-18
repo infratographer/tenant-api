@@ -117,7 +117,7 @@ func serve(ctx context.Context) {
 	}
 
 	r := graphapi.NewResolver(client, logger.Named("resolvers"))
-	handler := r.Handler(enablePlayground)
+	handler := r.Handler(enablePlayground, middleware)
 
 	srv.AddHandler(handler)
 
