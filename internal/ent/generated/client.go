@@ -30,7 +30,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
-	"go.infratographer.com/tenant-api/internal/pubsub"
+	"go.infratographer.com/tenant-api/pubsubx"
 )
 
 // Client is the client that holds all ent builders.
@@ -68,8 +68,8 @@ type (
 		// hooks to execute on mutations.
 		hooks *hooks
 		// interceptors to execute on queries.
-		inters       *inters
-		PubsubClient *pubsub.Client
+		inters           *inters
+		PubsubxPublisher *pubsubx.Publisher
 	}
 	// Option function to configure the client.
 	Option func(*config)
@@ -106,10 +106,10 @@ func Driver(driver dialect.Driver) Option {
 	}
 }
 
-// PubsubClient configures the PubsubClient.
-func PubsubClient(v *pubsub.Client) Option {
+// PubsubxPublisher configures the PubsubxPublisher.
+func PubsubxPublisher(v *pubsubx.Publisher) Option {
 	return func(c *config) {
-		c.PubsubClient = v
+		c.PubsubxPublisher = v
 	}
 }
 

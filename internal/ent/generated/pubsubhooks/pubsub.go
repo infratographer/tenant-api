@@ -24,9 +24,8 @@ import (
 	"entgo.io/ent"
 	"go.infratographer.com/tenant-api/internal/ent/generated"
 	"go.infratographer.com/tenant-api/internal/ent/generated/hook"
-	"go.infratographer.com/tenant-api/internal/pubsub"
+	"go.infratographer.com/tenant-api/pubsubx"
 	"go.infratographer.com/x/gidx"
-	"go.infratographer.com/x/pubsubx"
 )
 
 func TenantHooks() []ent.Hook {
@@ -177,9 +176,7 @@ func TenantHooks() []ent.Hook {
 						return retValue, err
 					}
 
-					pubSubj := m.PubsubClient.NewSubject("changes", eventType(m.Op()), "tenant")
-
-					if err := m.PubsubClient.PublishChange(ctx, pubSubj, msg); err != nil {
+					if err := m.PubsubxPublisher.PublishChange(ctx, "tenant", msg); err != nil {
 						return nil, fmt.Errorf("failed to publish change: %w", err)
 					}
 
@@ -222,9 +219,7 @@ func TenantHooks() []ent.Hook {
 						Timestamp:            time.Now().UTC(),
 					}
 
-					pubSubj := m.PubsubClient.NewSubject("changes", eventType(m.Op()), "tenant")
-
-					if err := m.PubsubClient.PublishChange(ctx, pubSubj, msg); err != nil {
+					if err := m.PubsubxPublisher.PublishChange(ctx, "tenant", msg); err != nil {
 						return nil, fmt.Errorf("failed to publish change: %w", err)
 					}
 
@@ -244,11 +239,11 @@ func PubsubHooks(c *generated.Client) {
 func eventType(op ent.Op) string {
 	switch op {
 	case ent.OpCreate:
-		return pubsub.CreateEventType
+		return "create"
 	case ent.OpUpdate, ent.OpUpdateOne:
-		return pubsub.UpdateEventType
+		return "update"
 	case ent.OpDelete, ent.OpDeleteOne:
-		return pubsub.DeleteEventType
+		return "delete"
 	default:
 		return "unknown"
 	}
