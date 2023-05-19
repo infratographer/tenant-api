@@ -29,7 +29,7 @@ func TestTenantPubsub(t *testing.T) {
 
 	psC := NatsTestClient
 
-	sub, err := psC.Subscribe(ctx, "com.infratographer.changes.>")
+	sub, err := psC.PullSubscribe(ctx, "com.infratographer.changes.>", "")
 	require.NoError(t, err)
 
 	// create a root tenant and ensure fields are set

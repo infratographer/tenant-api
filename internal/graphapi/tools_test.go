@@ -164,7 +164,7 @@ type localRoundTripper struct {
 func (l localRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
 	// set the actor to "testing-roundtrip-actor"
-	req := r.WithContext(context.WithValue(r.Context(), echojwtx.ActorKey, "testing-roundtrip-actor"))
+	req := r.WithContext(context.WithValue(r.Context(), echojwtx.ActorCtxKey, "testing-roundtrip-actor"))
 	l.handler.ServeHTTP(w, req)
 
 	return w.Result(), nil

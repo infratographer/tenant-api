@@ -46,9 +46,11 @@ func (c *Client) ChanSubscribe(_ context.Context, sub string, ch chan *nats.Msg,
 	return c.js.ChanSubscribe(sub, ch, nats.BindStream(stream))
 }
 
-// Subscribe creates a subcription and returns messages on a channel
-func (c *Client) Subscribe(_ context.Context, sub string) (*nats.Subscription, error) {
-	return c.js.PullSubscribe(sub, "TEST")
+// PullSubscribe creates a Subscription that can fetch messages.
+// See important note in (nats.JetStream).Subscribe(). Additionally, for an ephemeral pull consumer, the "durable" value must be
+// set to an empty string.
+func (c *Client) PullSubscribe(_ context.Context, sub string, durable string) (*nats.Subscription, error) {
+	return c.js.PullSubscribe(sub, durable)
 }
 
 // NewSubject builds a subject string based upon the provided
@@ -75,7 +77,7 @@ func (c *Client) PublishChange(ctx context.Context, subject string, data pubsubx
 
 	data.Source = c.source
 	if data.ActorID == gidx.NullPrefixedID {
-		id, ok := ctx.Value(echojwtx.ActorKey).(string)
+		id, ok := ctx.Value(echojwtx.ActorCtxKey).(string)
 		if ok {
 			data.ActorID = gidx.PrefixedID(id)
 		} else {
