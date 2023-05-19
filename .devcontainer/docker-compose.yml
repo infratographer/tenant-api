@@ -30,7 +30,7 @@ services:
 
     # Environment setup
   create_databases:
-    image: cockroachdb/cockroach:latest-v22.2
+    image: cockroachdb/cockroach:latest-v23.1
     restart: on-failure:5
     command: "sql --insecure -e 'CREATE DATABASE IF NOT EXISTS tenant_api_dev; CREATE DATABASE IF NOT EXISTS tenant_api_test; CREATE DATABASE IF NOT EXISTS atlas_migrations;'"
     env_file:
@@ -40,7 +40,7 @@ services:
 
   # Required services (databases, etc)
   crdb:
-    image: cockroachdb/cockroach:latest-v22.2
+    image: cockroachdb/cockroach:latest-v23.1
     command: start-single-node --insecure
     restart: unless-stopped
     volumes:

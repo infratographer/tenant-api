@@ -1,4 +1,4 @@
-name: Lint - Go
+name: Lint - Helm
 on:
   push:
   pull_request:

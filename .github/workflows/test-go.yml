@@ -16,8 +16,8 @@ jobs:
         ci-database:
           [
             "sqlite",
-            "cockroach-v22.1",
             "cockroach-v22.2",
+            "cockroach-v23.1",
             "cockroach-latest",
             "postgres-14",
             "postgres-15",
@@ -26,10 +26,10 @@ jobs:
         include:
           - ci-database: "sqlite"
             env-database-uri: "sqlite://file:ent?mode=memory&cache=shared&_fk=1"
-          - ci-database: "cockroach-v22.1"
-            env-database-uri: "docker://cockroach:latest-v22.1"
           - ci-database: "cockroach-v22.2"
             env-database-uri: "docker://cockroach:latest-v22.2"
+          - ci-database: "cockroach-v23.1"
+            env-database-uri: "docker://cockroach:latest-v23.1"
           - ci-database: "cockroach-latest"
             env-database-uri: "docker://cockroach:latest"
           - ci-database: "postgres-14"
