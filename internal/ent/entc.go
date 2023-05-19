@@ -25,21 +25,16 @@ import (
 	"go.infratographer.com/x/entx"
 
 	"go.infratographer.com/tenant-api/internal/pubsub"
-	"go.infratographer.com/tenant-api/x/pubsubhooks"
 )
 
 func main() {
 	xExt, err := entx.NewExtension(
 		entx.WithFederation(),
 		entx.WithJSONScalar(),
+		entx.WithPubsubHooks(),
 	)
 	if err != nil {
 		log.Fatalf("creating entx extension: %v", err)
-	}
-
-	pubsubExt, err := pubsubhooks.NewExtension()
-	if err != nil {
-		log.Fatalf("creating pubsubhooks extension: %v", err)
 	}
 
 	gqlExt, err := entgql.NewExtension(
@@ -59,7 +54,6 @@ func main() {
 		entc.Extensions(
 			xExt,
 			gqlExt,
-			pubsubExt,
 		),
 		entc.TemplateDir("./internal/ent/templates"),
 		entc.FeatureNames("intercept"),

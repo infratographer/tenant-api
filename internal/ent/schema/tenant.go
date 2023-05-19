@@ -25,8 +25,6 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 	"go.infratographer.com/x/entx"
 	"go.infratographer.com/x/gidx"
-
-	"go.infratographer.com/tenant-api/x/pubsubhooks"
 )
 
 // Tenant holds the schema definition for the Tenant entity.
@@ -70,7 +68,7 @@ func (Tenant) Fields() []ent.Field {
 			Annotations(
 				entgql.Type("ID"),
 				entgql.Skip(entgql.SkipWhereInput, entgql.SkipMutationUpdateInput, entgql.SkipType),
-				pubsubhooks.AdditionalSubject(),
+				entx.PubsubAdditionalSubject(),
 			),
 	}
 }
@@ -101,7 +99,7 @@ func (Tenant) Annotations() []schema.Annotation {
 		entx.GraphKeyDirective("id"),
 		prefixIDDirective(TenantPrefix),
 		rolesDirective(true, true),
-		pubsubhooks.Annotation{SubjectName: "tenant"},
+		entx.PubsubSubjectName("tenant"),
 		entgql.RelayConnection(),
 		schema.Comment("Representation of a tenant."),
 		entgql.Implements("ResourceOwner"),

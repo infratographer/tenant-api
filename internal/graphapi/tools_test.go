@@ -19,6 +19,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"go.infratographer.com/x/echojwtx"
 	"go.infratographer.com/x/goosex"
+	"go.infratographer.com/x/testing/containersx"
 	"go.uber.org/zap"
 
 	"go.infratographer.com/tenant-api/db"
@@ -27,13 +28,12 @@ import (
 	"go.infratographer.com/tenant-api/internal/graphapi"
 	"go.infratographer.com/tenant-api/internal/pubsub"
 	"go.infratographer.com/tenant-api/internal/testclient"
-	"go.infratographer.com/tenant-api/x/testcontainersx"
 )
 
 var (
 	TestDBURI      = os.Getenv("TENANTAPI_TESTDB_URI")
 	EntClient      *ent.Client
-	DBContainer    *testcontainersx.DBContainer
+	DBContainer    *containersx.DBContainer
 	DBURI          string
 	NatsTestClient *pubsub.Client
 )
@@ -49,7 +49,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func parseDBURI(ctx context.Context) (string, string, *testcontainersx.DBContainer) {
+func parseDBURI(ctx context.Context) (string, string, *containersx.DBContainer) {
 	switch {
 	// if you don't pass in a database we default to an in memory sqlite
 	case TestDBURI == "":
@@ -63,12 +63,12 @@ func parseDBURI(ctx context.Context) (string, string, *testcontainersx.DBContain
 
 		switch {
 		case strings.HasPrefix(dbImage, "cockroach"), strings.HasPrefix(dbImage, "cockroachdb"), strings.HasPrefix(dbImage, "crdb"):
-			cntr, err := testcontainersx.NewCockroachDB(ctx, dbImage)
+			cntr, err := containersx.NewCockroachDB(ctx, dbImage)
 			errPanic("error starting db test container", err)
 
 			return dialect.Postgres, cntr.URI, cntr
 		case strings.HasPrefix(dbImage, "postgres"):
-			cntr, err := testcontainersx.NewPostgresDB(ctx, dbImage,
+			cntr, err := containersx.NewPostgresDB(ctx, dbImage,
 				postgres.WithInitScripts(filepath.Join("testdata", "postgres_init.sh")),
 			)
 			errPanic("error starting db test container", err)

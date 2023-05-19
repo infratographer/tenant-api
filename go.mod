@@ -1,5 +1,7 @@
 module go.infratographer.com/tenant-api
 
+replace go.infratographer.com/x => github.com/nicolerenee/x v0.0.0-20230519050245-6d2727d1c79c
+
 go 1.20
 
 require (
@@ -8,7 +10,6 @@ require (
 	github.com/99designs/gqlgen v0.17.31
 	github.com/Yamashou/gqlgenc v0.13.5
 	github.com/brianvoe/gofakeit/v6 v6.21.0
-	github.com/docker/go-connections v0.4.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/lib/pq v1.10.9
@@ -18,7 +19,6 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2
-	github.com/testcontainers/testcontainers-go v0.20.1
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.20.1
 	github.com/vektah/gqlparser/v2 v2.5.1
 	github.com/wundergraph/graphql-go-tools v1.63.1
@@ -44,6 +44,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker v23.0.5+incompatible // indirect
+	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
@@ -109,6 +110,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
+	github.com/testcontainers/testcontainers-go v0.20.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.0.0-beta.9 // indirect
