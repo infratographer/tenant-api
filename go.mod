@@ -19,7 +19,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/vektah/gqlparser/v2 v2.5.1
 	github.com/wundergraph/graphql-go-tools v1.63.1
-	go.infratographer.com/x v0.1.0
+	go.infratographer.com/x v0.1.1
 	go.uber.org/zap v1.24.0
 )
 
