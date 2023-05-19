@@ -20,5 +20,5 @@ var AppConfig struct {
 
 // EventsConfig stores the configuration for a tenant-api event publisher
 type EventsConfig struct {
-	Publisher events.Publisher
+	Publisher events.PublisherConfig
 }

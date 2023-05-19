@@ -12,8 +12,8 @@ import (
 	"go.infratographer.com/x/crdbx"
 	"go.infratographer.com/x/echojwtx"
 	"go.infratographer.com/x/echox"
+	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/otelx"
-	"go.infratographer.com/x/pubsubx"
 	"go.infratographer.com/x/versionx"
 	"go.uber.org/zap"
 
@@ -43,6 +43,7 @@ func init() {
 
 	echox.MustViperFlags(viper.GetViper(), serveCmd.Flags(), APIDefaultListen)
 	echojwtx.MustViperFlags(viper.GetViper(), serveCmd.Flags())
+	events.MustViperFlagsForPublisher(viper.GetViper(), serveCmd.Flags(), appName)
 
 	// only available as a CLI arg because it shouldn't be something that could accidentially end up in a config file or env var
 	serveCmd.Flags().BoolVar(&serveDevMode, "dev", false, "dev mode: enables playground, disables all auth checks, sets CORS to allow all, pretty logging, etc.")
@@ -59,7 +60,7 @@ func serve(ctx context.Context) {
 		viper.Set("oidc.enabled", false)
 	}
 
-	publisher, err := pubsubx.NewPublisher(config.AppConfig.PubsubPublisher)
+	publisher, err := events.NewPublisher(config.AppConfig.Events.Publisher)
 	if err != nil {
 		logger.Fatal("unable to initialize event publisher", zap.Error(err))
 	}
@@ -78,7 +79,7 @@ func serve(ctx context.Context) {
 
 	entDB := entsql.OpenDB(dialect.Postgres, db)
 
-	cOpts := []ent.Option{ent.Driver(entDB), ent.PubsubxPublisher(publisher)}
+	cOpts := []ent.Option{ent.Driver(entDB), ent.EventsPublisher(publisher)}
 
 	if config.AppConfig.Logging.Debug {
 		cOpts = append(cOpts,
