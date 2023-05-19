@@ -1,9 +1,9 @@
 model:
-  package: graphclient
-  filename: ./internal/graphclient/gen_models.go
+  package: testclient
+  filename: ./internal/testclient/gen_models.go
 client:
-  package: graphclient
-  filename: ./internal/graphclient/gen_client.go # Where should any generated client go?
+  package: testclient
+  filename: ./internal/testclient/gen_client.go # Where should any generated client go?
 models:
   ID:
     model:
@@ -15,7 +15,7 @@ models:
 schema:
   - "schema.graphql"
 query:
-  - "internal/graphclient/*.graphql"
+  - "internal/testclient/*.graphql"
 generate:
   client: true
-  clientInterfaceName: "GraphClient"
+  clientInterfaceName: "TestClient"

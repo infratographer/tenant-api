@@ -10,7 +10,7 @@ import (
 	"go.infratographer.com/x/gidx"
 
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"
-	"go.infratographer.com/tenant-api/internal/graphclient"
+	"go.infratographer.com/tenant-api/internal/testclient"
 )
 
 func TestTenantQueryByID(t *testing.T) {
@@ -80,44 +80,44 @@ func TestTenantChildrenSorting(t *testing.T) {
 
 	testCases := []struct {
 		TestName      string
-		OrderBy       *graphclient.TenantOrder
+		OrderBy       *testclient.TenantOrder
 		TenantID      gidx.PrefixedID
 		ResponseOrder []*ent.Tenant
 		errorMsg      string
 	}{
 		{
 			TestName:      "Ordered By NAME ASC",
-			OrderBy:       &graphclient.TenantOrder{Field: "NAME", Direction: "ASC"},
+			OrderBy:       &testclient.TenantOrder{Field: "NAME", Direction: "ASC"},
 			TenantID:      tenant.ID,
 			ResponseOrder: []*ent.Tenant{andy, nicole, sarah},
 		},
 		{
 			TestName:      "Ordered By NAME DESC",
-			OrderBy:       &graphclient.TenantOrder{Field: "NAME", Direction: "DESC"},
+			OrderBy:       &testclient.TenantOrder{Field: "NAME", Direction: "DESC"},
 			TenantID:      tenant.ID,
 			ResponseOrder: []*ent.Tenant{sarah, nicole, andy},
 		},
 		{
 			TestName:      "Ordered By CREATED_AT ASC",
-			OrderBy:       &graphclient.TenantOrder{Field: "CREATED_AT", Direction: "ASC"},
+			OrderBy:       &testclient.TenantOrder{Field: "CREATED_AT", Direction: "ASC"},
 			TenantID:      tenant.ID,
 			ResponseOrder: []*ent.Tenant{nicole, sarah, andy},
 		},
 		{
 			TestName:      "Ordered By CREATED_AT DESC",
-			OrderBy:       &graphclient.TenantOrder{Field: "CREATED_AT", Direction: "DESC"},
+			OrderBy:       &testclient.TenantOrder{Field: "CREATED_AT", Direction: "DESC"},
 			TenantID:      tenant.ID,
 			ResponseOrder: []*ent.Tenant{andy, sarah, nicole},
 		},
 		{
 			TestName:      "Ordered By UPDATED_AT ASC",
-			OrderBy:       &graphclient.TenantOrder{Field: "UPDATED_AT", Direction: "ASC"},
+			OrderBy:       &testclient.TenantOrder{Field: "UPDATED_AT", Direction: "ASC"},
 			TenantID:      tenant.ID,
 			ResponseOrder: []*ent.Tenant{nicole, andy, sarah},
 		},
 		{
 			TestName:      "Ordered By UPDATED_AT DESC",
-			OrderBy:       &graphclient.TenantOrder{Field: "UPDATED_AT", Direction: "DESC"},
+			OrderBy:       &testclient.TenantOrder{Field: "UPDATED_AT", Direction: "DESC"},
 			TenantID:      tenant.ID,
 			ResponseOrder: []*ent.Tenant{sarah, andy, nicole},
 		},
@@ -225,7 +225,7 @@ func TestFullTenantLifecycle(t *testing.T) {
 	graphC := graphTestClient(EntClient)
 
 	// create the Root tenant
-	rootResp, err := graphC.TenantCreate(ctx, graphclient.CreateTenantInput{
+	rootResp, err := graphC.TenantCreate(ctx, testclient.CreateTenantInput{
 		Name:        name,
 		Description: &description,
 	})
@@ -243,7 +243,7 @@ func TestFullTenantLifecycle(t *testing.T) {
 
 	// Update the tenant
 	newName := gofakeit.DomainName()
-	updatedTenantResp, err := graphC.TenantUpdate(ctx, rootTenant.ID, graphclient.UpdateTenantInput{Name: &newName})
+	updatedTenantResp, err := graphC.TenantUpdate(ctx, rootTenant.ID, testclient.UpdateTenantInput{Name: &newName})
 
 	require.NoError(t, err)
 	require.NotNil(t, updatedTenantResp)
@@ -261,7 +261,7 @@ func TestFullTenantLifecycle(t *testing.T) {
 	require.Equal(t, newName, queryRootResp.Tenant.Name)
 
 	// Add a child tenant with no description
-	childResp, err := graphC.TenantCreate(ctx, graphclient.CreateTenantInput{
+	childResp, err := graphC.TenantCreate(ctx, testclient.CreateTenantInput{
 		Name:     "child",
 		ParentID: &rootTenant.ID,
 	})

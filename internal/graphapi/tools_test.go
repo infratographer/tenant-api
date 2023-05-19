@@ -25,8 +25,8 @@ import (
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"
 	"go.infratographer.com/tenant-api/internal/ent/generated/pubsubhooks"
 	"go.infratographer.com/tenant-api/internal/graphapi"
-	"go.infratographer.com/tenant-api/internal/graphclient"
 	"go.infratographer.com/tenant-api/internal/pubsub"
+	"go.infratographer.com/tenant-api/internal/testclient"
 	"go.infratographer.com/tenant-api/x/testcontainersx"
 )
 
@@ -148,8 +148,8 @@ func errPanic(msg string, err error) {
 	}
 }
 
-func graphTestClient(entClient *ent.Client) graphclient.GraphClient {
-	return graphclient.NewClient(&http.Client{Transport: localRoundTripper{handler: handler.NewDefaultServer(
+func graphTestClient(entClient *ent.Client) testclient.TestClient {
+	return testclient.NewClient(&http.Client{Transport: localRoundTripper{handler: handler.NewDefaultServer(
 		graphapi.NewExecutableSchema(
 			graphapi.Config{Resolvers: graphapi.NewResolver(entClient, zap.NewNop().Sugar())},
 		))}}, "graph")

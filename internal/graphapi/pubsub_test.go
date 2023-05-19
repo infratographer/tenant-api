@@ -15,7 +15,7 @@ import (
 	"go.infratographer.com/x/gidx"
 	"go.infratographer.com/x/pubsubx"
 
-	"go.infratographer.com/tenant-api/internal/graphclient"
+	"go.infratographer.com/tenant-api/internal/testclient"
 )
 
 func TestTenantPubsub(t *testing.T) {
@@ -33,7 +33,7 @@ func TestTenantPubsub(t *testing.T) {
 	require.NoError(t, err)
 
 	// create a root tenant and ensure fields are set
-	rootResp, err := graphC.TenantCreate(ctx, graphclient.CreateTenantInput{
+	rootResp, err := graphC.TenantCreate(ctx, testclient.CreateTenantInput{
 		Name:        name,
 		Description: &description,
 	})
@@ -85,7 +85,7 @@ func TestTenantPubsub(t *testing.T) {
 	assert.True(t, descriptionVisited)
 
 	// Add a child tenant with no description
-	childResp, err := graphC.TenantCreate(ctx, graphclient.CreateTenantInput{
+	childResp, err := graphC.TenantCreate(ctx, testclient.CreateTenantInput{
 		Name:     "child",
 		ParentID: &rootTenant.ID,
 	})
@@ -145,7 +145,7 @@ func TestTenantPubsub(t *testing.T) {
 
 	// Update the tenant
 	newName := gofakeit.DomainName()
-	updatedTenantResp, err := graphC.TenantUpdate(ctx, childTnt.ID, graphclient.UpdateTenantInput{Name: &newName})
+	updatedTenantResp, err := graphC.TenantUpdate(ctx, childTnt.ID, testclient.UpdateTenantInput{Name: &newName})
 
 	require.NoError(t, err)
 	require.NotNil(t, updatedTenantResp)
