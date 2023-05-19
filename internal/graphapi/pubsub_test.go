@@ -67,9 +67,11 @@ func TestTenantPubsub(t *testing.T) {
 			assert.WithinDuration(t, time.Now(), ts, 2*time.Second)
 		case "name":
 			nameVisited = true
+
 			assert.EqualValues(t, name, change.CurrentValue)
 		case "description":
 			descriptionVisited = true
+
 			assert.EqualValues(t, description, change.CurrentValue)
 		default:
 			assert.Fail(t, "unexpected field in changeset %s")
@@ -124,9 +126,11 @@ func TestTenantPubsub(t *testing.T) {
 			assert.WithinDuration(t, time.Now(), ts, 2*time.Second)
 		case "name":
 			nameVisited = true
+
 			assert.EqualValues(t, "child", change.CurrentValue)
 		case "parent_tenant_id":
 			parentIDVisited = true
+
 			assert.EqualValues(t, rootTenant.ID.String(), change.CurrentValue)
 		default:
 			assert.Fail(t, fmt.Sprintf("unexpected field in changeset %s", change.Field))
@@ -169,6 +173,7 @@ func TestTenantPubsub(t *testing.T) {
 			assert.WithinDuration(t, time.Now(), ts, 2*time.Second)
 		case "name":
 			nameVisited = true
+
 			assert.EqualValues(t, "child", change.PreviousValue)
 			assert.EqualValues(t, newName, change.CurrentValue)
 		default:
