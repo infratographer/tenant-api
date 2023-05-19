@@ -10,10 +10,8 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
+	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/gidx"
-
-	"go.infratographer.com/tenant-api/pubsubx"
 
 	"go.infratographer.com/tenant-api/internal/testclient"
 )
@@ -26,7 +24,7 @@ func TestTenantPubsub(t *testing.T) {
 
 	graphC := graphTestClient(testTools.pubsubEntClient)
 
-	sub, err := pubsubx.NewSubscriber(testTools.pubsubSubscriberConfig)
+	sub, err := events.NewSubscriber(testTools.pubsubSubscriberConfig)
 	require.NoError(t, err)
 
 	messages, err := sub.SubscribeChanges(context.Background(), ">")
@@ -212,11 +210,11 @@ func TestTenantPubsub(t *testing.T) {
 	assert.Len(t, msg.FieldChanges, 0)
 }
 
-func getChangeMessage(t *testing.T, messages <-chan *message.Message) (msg pubsubx.ChangeMessage) {
+func getChangeMessage(t *testing.T, messages <-chan *message.Message) (msg events.ChangeMessage) {
 	var err error
 	select {
 	case message := <-messages:
-		msg, err = pubsubx.UnmarshalChangeMessage(message.Payload)
+		msg, err = events.UnmarshalChangeMessage(message.Payload)
 		require.NoError(t, err)
 		assert.True(t, message.Ack())
 

@@ -14,17 +14,17 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"go.infratographer.com/x/echojwtx"
+	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/goosex"
 	"go.infratographer.com/x/testing/containersx"
+	"go.infratographer.com/x/testing/eventtools"
 	"go.uber.org/zap"
 
 	"go.infratographer.com/tenant-api/db"
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"
-	"go.infratographer.com/tenant-api/internal/ent/generated/pubsubhooks"
+	"go.infratographer.com/tenant-api/internal/ent/generated/eventhooks"
 	"go.infratographer.com/tenant-api/internal/graphapi"
 	"go.infratographer.com/tenant-api/internal/testclient"
-	"go.infratographer.com/tenant-api/pubsubx"
-	"go.infratographer.com/tenant-api/testing/pubsubxtools"
 )
 
 var TestDBURI = os.Getenv("TENANTAPI_TESTDB_URI")
@@ -34,8 +34,8 @@ var testTools struct {
 	dbContainer *containersx.DBContainer
 
 	pubsubEntClient        *ent.Client
-	pubsubPublisherConfig  pubsubx.PublisherConfig
-	pubsubSubscriberConfig pubsubx.SubscriberConfig
+	pubsubPublisherConfig  events.PublisherConfig
+	pubsubSubscriberConfig events.SubscriberConfig
 }
 
 func TestMain(m *testing.M) {
@@ -95,7 +95,7 @@ func setupDB() {
 
 	ctx := context.Background()
 
-	testTools.pubsubPublisherConfig, testTools.pubsubSubscriberConfig, err = pubsubxtools.NewNatsServer()
+	testTools.pubsubPublisherConfig, testTools.pubsubSubscriberConfig, err = eventtools.NewNatsServer()
 	if err != nil {
 		log.Panicf("error creating nats server: %s", err.Error())
 	}
@@ -104,12 +104,12 @@ func setupDB() {
 
 	dia, uri, cntr := parseDBURI(ctx)
 
-	publisher, err := pubsubx.NewPublisher(testTools.pubsubPublisherConfig)
+	publisher, err := events.NewPublisher(testTools.pubsubPublisherConfig)
 	if err != nil {
 		log.Panicf("error creating pubsubx publisher: %s", err.Error())
 	}
 
-	c, err := ent.Open(dia, uri, ent.Debug(), ent.PubsubxPublisher(publisher))
+	c, err := ent.Open(dia, uri, ent.Debug(), ent.EventsPublisher(publisher))
 	if err != nil {
 		if err := cntr.Container.Terminate(ctx); err != nil {
 			log.Printf("error terminating test db container: %s", err.Error())
@@ -132,7 +132,7 @@ func setupDB() {
 	testTools.dbContainer = cntr
 	testTools.entClient = c
 	testTools.pubsubEntClient = c
-	pubsubhooks.PubsubHooks(testTools.pubsubEntClient)
+	eventhooks.EventHooks(testTools.pubsubEntClient)
 }
 
 func teardownDB() {
