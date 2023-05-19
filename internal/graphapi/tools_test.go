@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -16,7 +15,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	natssrv "github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"go.infratographer.com/x/echojwtx"
 	"go.infratographer.com/x/goosex"
 	"go.infratographer.com/x/testing/containersx"
@@ -68,9 +66,7 @@ func parseDBURI(ctx context.Context) (string, string, *containersx.DBContainer) 
 
 			return dialect.Postgres, cntr.URI, cntr
 		case strings.HasPrefix(dbImage, "postgres"):
-			cntr, err := containersx.NewPostgresDB(ctx, dbImage,
-				postgres.WithInitScripts(filepath.Join("testdata", "postgres_init.sh")),
-			)
+			cntr, err := containersx.NewPostgresDB(ctx, dbImage)
 			errPanic("error starting db test container", err)
 
 			return dialect.Postgres, cntr.URI, cntr
