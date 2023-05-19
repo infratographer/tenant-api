@@ -1,7 +1,5 @@
 module go.infratographer.com/tenant-api
 
-replace go.infratographer.com/x => github.com/nicolerenee/x v0.0.0-20230519050245-6d2727d1c79c
-
 go 1.20
 
 require (
@@ -21,7 +19,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/vektah/gqlparser/v2 v2.5.1
 	github.com/wundergraph/graphql-go-tools v1.63.1
-	go.infratographer.com/x v0.0.15
+	go.infratographer.com/x v0.1.0
 	go.uber.org/zap v1.24.0
 )
 
