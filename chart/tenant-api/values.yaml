@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/infratographer/tenant-api
-  tag: "0.0.8"
+  tag: null # chart app version used by default
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
