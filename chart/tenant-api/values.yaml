@@ -47,7 +47,8 @@ api:
   db:
     uriSecret: tenant-api-db-uri
     certSecret: tenant-api-db-ca
-  migrateOnInit: true
+    certMountPath: /dbcerts
+    migrateOnInit: true
 
   oidc:
     audience: ""

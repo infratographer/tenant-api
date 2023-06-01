@@ -37,7 +37,7 @@ spec:
       securityContext:
         {{- toYaml .Values.api.podSecurityContext | nindent 8 }}
       {{- end }}
-      {{- if .Values.api.migrateOnInit  }}
+      {{- if .Values.api.db.migrateOnInit  }}
       initContainers:
         - name: {{ .Chart.Name }}-migrate
           envFrom:
@@ -51,7 +51,7 @@ spec:
           volumeMounts:
             {{- if .Values.api.db.certSecret }}
             - name: dbcerts
-              mountPath: "/dbcerts"
+              mountPath: "{{ .Values.api.db.certMountPath }}"
               readOnly: true
             {{- end }}
           resources:
@@ -120,7 +120,7 @@ spec:
             {{- end }}
             {{- if .Values.api.db.certSecret }}
             - name: dbcerts
-              mountPath: "/dbcerts"
+              mountPath: "{{ .Values.api.db.certMountPath }}"
               readOnly: true
             {{- end }}
           resources:
