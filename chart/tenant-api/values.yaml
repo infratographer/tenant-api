@@ -53,6 +53,9 @@ api:
     certMountPath: /dbcerts
     migrateOnInit: true
 
+  permissions:
+    url: ""
+
   oidc:
     audience: ""
     issuer: ""

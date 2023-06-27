@@ -76,6 +76,8 @@ spec:
               value: "{{ .Values.api.events.prefix }}"
             - name: TENANTAPI_EVENTS_PUBLISHER_QUEUEGROUP
               value: "{{ .Values.api.events.queueGroup }}"
+            - name: TENANTAPI_PERMISSIONS_URL
+              value: "{{ .Values.api.permissions.url }}"
           {{- if .Values.api.events.nats.credsSecretName }}
             - name: TENANTAPI_EVENTS_PUBLISHER_NATS_CREDSFILE
               value: "{{ .Values.api.events.nats.credsFile }}"
