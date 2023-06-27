@@ -42,7 +42,7 @@ api:
     url: ""
     timeout: ""
     prefix: ""
-    queueGroup: ""
+    source: ""
     nats:
       credsSecretName: ""
       credsFile: "/nats/creds"
