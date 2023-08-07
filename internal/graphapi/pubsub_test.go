@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,10 +27,32 @@ func TestTenantPubsub(t *testing.T) {
 
 	graphC := graphTestClient(testTools.pubsubEntClient)
 
-	sub, err := events.NewSubscriber(testTools.pubsubSubscriberConfig)
+	sub, err := events.NewConnection(testTools.eventsConfig)
 	require.NoError(t, err)
 
-	messages, err := sub.SubscribeChanges(context.Background(), ">")
+	defer sub.Shutdown(ctx) //nolint:errcheck // skip check in test
+
+	perms, err := permissions.New(permissions.Config{}, permissions.WithEventsPublisher(sub))
+	if err != nil {
+		t.Fatalf("failed to initialize permissions: %s", err.Error())
+	}
+
+	ctx = context.WithValue(ctx, permissions.AuthRelationshipRequestHandlerCtxKey, perms)
+
+	authMsgs, err := sub.SubscribeAuthRelationshipRequests(ctx, ">")
+	require.NoError(t, err)
+
+	var authRequests int
+
+	go func() {
+		for msg := range authMsgs {
+			authRequests++
+
+			msg.Reply(ctx, events.AuthRelationshipResponse{}) //nolint:errcheck // reply to unblock request
+		}
+	}()
+
+	messages, err := sub.SubscribeChanges(ctx, ">")
 	require.NoError(t, err)
 
 	// create a root tenant and ensure fields are set
@@ -42,7 +63,7 @@ func TestTenantPubsub(t *testing.T) {
 	require.NoError(t, err)
 
 	rootTenant := rootResp.TenantCreate.Tenant
-	msg := getChangeMessage(t, messages)
+	msg := getSingleMessage(t, messages)
 	assert.Equal(t, "testing-roundtrip-actor", msg.ActorID.String())
 	assert.Equal(t, "create", msg.EventType)
 	assert.Equal(t, "tenant-api-test", msg.Source)
@@ -97,7 +118,7 @@ func TestTenantPubsub(t *testing.T) {
 
 	childTnt := childResp.TenantCreate.Tenant
 
-	msg = getChangeMessage(t, messages)
+	msg = getSingleMessage(t, messages)
 	assert.Equal(t, "testing-roundtrip-actor", msg.ActorID.String())
 	assert.Equal(t, "create", msg.EventType)
 	assert.Equal(t, "tenant-api-test", msg.Source)
@@ -152,7 +173,7 @@ func TestTenantPubsub(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, updatedTenantResp)
 
-	msg = getChangeMessage(t, messages)
+	msg = getSingleMessage(t, messages)
 	assert.Equal(t, "testing-roundtrip-actor", msg.ActorID.String())
 	assert.Equal(t, "update", msg.EventType)
 	assert.Equal(t, "tenant-api-test", msg.Source)
@@ -191,7 +212,7 @@ func TestTenantPubsub(t *testing.T) {
 	_, err = graphC.TenantDelete(ctx, childTnt.ID)
 	require.NoError(t, err)
 
-	msg = getChangeMessage(t, messages)
+	msg = getSingleMessage(t, messages)
 	assert.Equal(t, "testing-roundtrip-actor", msg.ActorID.String())
 	assert.Equal(t, "delete", msg.EventType)
 	assert.Equal(t, "tenant-api-test", msg.Source)
@@ -204,7 +225,7 @@ func TestTenantPubsub(t *testing.T) {
 	_, err = graphC.TenantDelete(ctx, rootTenant.ID)
 	require.NoError(t, err)
 
-	msg = getChangeMessage(t, messages)
+	msg = getSingleMessage(t, messages)
 	assert.Equal(t, "testing-roundtrip-actor", msg.ActorID.String())
 	assert.Equal(t, "delete", msg.EventType)
 	assert.Equal(t, "tenant-api-test", msg.Source)
@@ -212,20 +233,22 @@ func TestTenantPubsub(t *testing.T) {
 	assert.Empty(t, msg.AdditionalSubjectIDs)
 	// expect created_at, updated_at, name, and description changeset
 	assert.Len(t, msg.FieldChanges, 0)
+
+	assert.Equal(t, 3, authRequests, "expected the number of auth requests to match the number of create/delete requests")
 }
 
-func getChangeMessage(t *testing.T, messages <-chan *message.Message) (msg events.ChangeMessage) {
-	var err error
+func getSingleMessage[T any](t *testing.T, messages <-chan events.Message[T]) T {
 	select {
 	case message := <-messages:
-		msg, err = events.UnmarshalChangeMessage(message.Payload)
-		require.NoError(t, err)
-		assert.True(t, message.Ack())
+		require.NoError(t, message.Error())
+		assert.NoError(t, message.Ack())
 
-		return msg
+		return message.Message()
 	case <-time.After(time.Second * 2):
 		require.Fail(t, "timeout waiting for change message")
 	}
 
-	return
+	var empty T
+
+	return empty
 }

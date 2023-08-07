@@ -16,14 +16,9 @@ import (
 var AppConfig struct {
 	CRDB        crdbx.Config
 	Logging     loggingx.Config
-	Events      EventsConfig
+	Events      events.Config
 	Server      echox.Config
 	OIDC        echojwtx.AuthConfig
 	Tracing     otelx.Config
 	Permissions permissions.Config
-}
-
-// EventsConfig stores the configuration for a tenant-api event publisher
-type EventsConfig struct {
-	Publisher events.PublisherConfig
 }

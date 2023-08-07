@@ -6,7 +6,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/gidx"
 
 	"go.infratographer.com/permissions-api/pkg/permissions"
@@ -24,7 +23,6 @@ var tenantCreateCmd = &cobra.Command{
 func init() {
 	tenantCmd.AddCommand(tenantCreateCmd)
 
-	events.MustViperFlagsForPublisher(viper.GetViper(), tenantCreateCmd.Flags(), appName)
 	permissions.MustViperFlags(viper.GetViper(), tenantCreateCmd.Flags())
 
 	tenantCreateCmd.Flags().String("description", "", "description of tenant")

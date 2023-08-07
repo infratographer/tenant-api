@@ -20,9 +20,9 @@ var tenantCmd = &cobra.Command{
 }
 
 func initializeGraphClient() (*ent.Client, func()) {
-	publisher, err := events.NewPublisher(config.AppConfig.Events.Publisher)
+	events, err := events.NewConnection(config.AppConfig.Events, events.WithLogger(logger))
 	if err != nil {
-		logger.Fatal("unable to initialize event publisher", zap.Error(err))
+		logger.Fatal("failed to initialize events", zap.Error(err))
 	}
 
 	err = otelx.InitTracer(config.AppConfig.Tracing, appName, logger)
@@ -37,7 +37,7 @@ func initializeGraphClient() (*ent.Client, func()) {
 
 	entDB := entsql.OpenDB(dialect.Postgres, db)
 
-	cOpts := []ent.Option{ent.Driver(entDB), ent.EventsPublisher(publisher)}
+	cOpts := []ent.Option{ent.Driver(entDB), ent.EventsPublisher(events)}
 
 	if config.AppConfig.Logging.Debug {
 		cOpts = append(cOpts,

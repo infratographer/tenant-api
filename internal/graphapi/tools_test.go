@@ -33,9 +33,8 @@ var testTools struct {
 	entClient   *ent.Client
 	dbContainer *containersx.DBContainer
 
-	pubsubEntClient        *ent.Client
-	pubsubPublisherConfig  events.PublisherConfig
-	pubsubSubscriberConfig events.SubscriberConfig
+	pubsubEntClient *ent.Client
+	eventsConfig    events.Config
 }
 
 func TestMain(m *testing.M) {
@@ -98,19 +97,17 @@ func setupDB() {
 		log.Panicf("error creating nats server: %s", err.Error())
 	}
 
-	testTools.pubsubPublisherConfig = nats.PublisherConfig
-	testTools.pubsubSubscriberConfig = nats.SubscriberConfig
-
-	testTools.pubsubPublisherConfig.Source = "tenant-api-test"
+	testTools.eventsConfig = nats.Config
+	testTools.eventsConfig.NATS.Source = "tenant-api-test"
 
 	dia, uri, cntr := parseDBURI(ctx)
 
-	publisher, err := events.NewPublisher(testTools.pubsubPublisherConfig)
+	conn, err := events.NewConnection(testTools.eventsConfig)
 	if err != nil {
 		log.Panicf("error creating pubsubx publisher: %s", err.Error())
 	}
 
-	c, err := ent.Open(dia, uri, ent.Debug(), ent.EventsPublisher(publisher))
+	c, err := ent.Open(dia, uri, ent.Debug(), ent.EventsPublisher(conn))
 	if err != nil {
 		if err := cntr.Container.Terminate(ctx); err != nil {
 			log.Printf("error terminating test db container: %s", err.Error())
