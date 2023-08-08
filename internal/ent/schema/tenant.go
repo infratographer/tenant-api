@@ -68,7 +68,7 @@ func (Tenant) Fields() []ent.Field {
 			Annotations(
 				entgql.Type("ID"),
 				entgql.Skip(entgql.SkipWhereInput, entgql.SkipMutationUpdateInput, entgql.SkipType),
-				entx.EventsHookAdditionalSubject(),
+				entx.EventsHookAdditionalSubject("parent"),
 			),
 	}
 }

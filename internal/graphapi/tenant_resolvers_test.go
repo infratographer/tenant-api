@@ -6,8 +6,10 @@ import (
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.infratographer.com/permissions-api/pkg/permissions"
+	"go.infratographer.com/permissions-api/pkg/permissions/mockpermissions"
 	"go.infratographer.com/x/gidx"
 
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"
@@ -16,6 +18,11 @@ import (
 
 func TestTenantQueryByID(t *testing.T) {
 	ctx := context.Background()
+
+	perms := new(mockpermissions.MockPermissions)
+	perms.On("CreateAuthRelationships", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	ctx = perms.ContextWithHandler(ctx)
 
 	// Permit request
 	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultAllowChecker)
@@ -76,6 +83,11 @@ func TestTenantQueryByID(t *testing.T) {
 
 func TestTenantChildrenSorting(t *testing.T) {
 	ctx := context.Background()
+
+	perms := new(mockpermissions.MockPermissions)
+	perms.On("CreateAuthRelationships", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	ctx = perms.ContextWithHandler(ctx)
 
 	// Permit request
 	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultAllowChecker)
@@ -163,6 +175,11 @@ func TestTenantChildrenSorting(t *testing.T) {
 func TestTenantChildrenWhereFiltering(t *testing.T) {
 	ctx := context.Background()
 
+	perms := new(mockpermissions.MockPermissions)
+	perms.On("CreateAuthRelationships", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	ctx = perms.ContextWithHandler(ctx)
+
 	// Permit request
 	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultAllowChecker)
 
@@ -236,6 +253,12 @@ func TestFullTenantLifecycle(t *testing.T) {
 	description := gofakeit.Phrase()
 
 	graphC := graphTestClient(testTools.entClient)
+
+	perms := new(mockpermissions.MockPermissions)
+	perms.On("CreateAuthRelationships", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	perms.On("DeleteAuthRelationships", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	ctx = perms.ContextWithHandler(ctx)
 
 	// Deny request
 	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultDenyChecker)
@@ -377,4 +400,8 @@ func TestFullTenantLifecycle(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, queryResp)
 	assert.ErrorContains(t, err, "tenant not found")
+
+	// only one of each call should be registered, as the root create/delete have no relationships.
+	perms.AssertNumberOfCalls(t, "CreateAuthRelationships", 1)
+	perms.AssertNumberOfCalls(t, "DeleteAuthRelationships", 1)
 }

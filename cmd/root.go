@@ -95,6 +95,8 @@ func initConfig() {
 			"file", viper.ConfigFileUsed(),
 		)
 	}
+
+	setupAppConfig()
 }
 
 // setupAppConfig loads our config.AppConfig struct with the values bound by

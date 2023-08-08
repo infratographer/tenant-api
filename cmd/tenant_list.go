@@ -24,7 +24,7 @@ var tenantList = &cobra.Command{
 func init() {
 	tenantCmd.AddCommand(tenantList)
 
-	events.MustViperFlagsForPublisher(viper.GetViper(), tenantList.Flags(), appName)
+	events.MustViperFlags(viper.GetViper(), tenantList.Flags(), appName)
 	permissions.MustViperFlags(viper.GetViper(), tenantList.Flags())
 
 	tenantList.Flags().Bool("all", false, "query all")
