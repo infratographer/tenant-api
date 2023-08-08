@@ -151,4 +151,4 @@ require (
 
 replace go.infratographer.com/permissions-api => github.com/mikemrm/infratographer-permissions-api v0.0.0-20230804141719-bfbce707b279
 
-replace go.infratographer.com/x => github.com/mikemrm/infratographer-x v0.0.0-20230804122801-b75f397f9d1a
+replace go.infratographer.com/x => github.com/mikemrm/infratographer-x 1cb675083e6c
