@@ -64,6 +64,8 @@ spec:
               value: ":{{ .Values.api.listenPort }}"
             - name: TENANTAPI_SERVER_SHUTDOWN_GRACE_PERIOD
               value: "{{ .Values.api.shutdownGracePeriod }}"
+            - name: TENANTAPI_PERMISSIONS_URL
+              value: "{{ .Values.api.permissions.url }}"
             - name: TENANTAPI_TRACING_ENABLED
               value: "{{ .Values.api.tracing.enabled }}"
             - name: TENANTAPI_TRACING_PROVIDER
