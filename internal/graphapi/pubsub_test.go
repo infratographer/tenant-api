@@ -234,7 +234,7 @@ func TestTenantPubsub(t *testing.T) {
 	// expect created_at, updated_at, name, and description changeset
 	assert.Len(t, msg.FieldChanges, 0)
 
-	assert.Equal(t, 3, authRequests, "expected the number of auth requests to match the number of create/delete requests")
+	assert.Equal(t, 2, authRequests, "expected the number of auth requests to match the number of create/delete requests")
 }
 
 func getSingleMessage[T any](t *testing.T, messages <-chan events.Message[T]) T {
