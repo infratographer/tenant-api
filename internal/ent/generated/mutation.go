@@ -381,6 +381,7 @@ func (m *TenantMutation) SetParentID(id gidx.PrefixedID) {
 // ClearParent clears the "parent" edge to the Tenant entity.
 func (m *TenantMutation) ClearParent() {
 	m.clearedparent = true
+	m.clearedFields[tenant.FieldParentTenantID] = struct{}{}
 }
 
 // ParentCleared reports if the "parent" edge to the Tenant entity was cleared.

@@ -28,16 +28,6 @@ func NewClient(cli *http.Client, baseURL string, options ...client.HTTPRequestOp
 	return &Client{Client: client.NewClient(cli, baseURL, options...)}
 }
 
-type Query struct {
-	Tenant   Tenant   "json:\"tenant\" graphql:\"tenant\""
-	Entities []Entity "json:\"_entities\" graphql:\"_entities\""
-	Service  Service  "json:\"_service\" graphql:\"_service\""
-}
-type Mutation struct {
-	TenantCreate TenantCreatePayload "json:\"tenantCreate\" graphql:\"tenantCreate\""
-	TenantUpdate TenantUpdatePayload "json:\"tenantUpdate\" graphql:\"tenantUpdate\""
-	TenantDelete TenantDeletePayload "json:\"tenantDelete\" graphql:\"tenantDelete\""
-}
 type GetTenant struct {
 	Tenant struct {
 		ID          gidx.PrefixedID "json:\"id\" graphql:\"id\""

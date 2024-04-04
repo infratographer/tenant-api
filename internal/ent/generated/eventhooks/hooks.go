@@ -143,7 +143,6 @@ func TenantHooks() []ent.Hook {
 					}
 					if parent_tenant_id != gidx.NullPrefixedID {
 						additionalSubjects = append(additionalSubjects, parent_tenant_id)
-
 						relationships = append(relationships, events.AuthRelationshipRelation{
 							Relation:  "parent",
 							SubjectID: parent_tenant_id,
@@ -169,12 +168,6 @@ func TenantHooks() []ent.Hook {
 						})
 					}
 
-					if len(relationships) != 0 {
-						if err := permissions.CreateAuthRelationships(ctx, "tenant", objID, relationships...); err != nil {
-							return nil, fmt.Errorf("relationship request failed with error: %w", err)
-						}
-					}
-
 					msg := events.ChangeMessage{
 						EventType:            eventType(m.Op()),
 						SubjectID:            objID,
@@ -187,6 +180,12 @@ func TenantHooks() []ent.Hook {
 					retValue, err := next.Mutate(ctx, m)
 					if err != nil {
 						return retValue, err
+					}
+
+					if len(relationships) != 0 && m.Op().Is(ent.OpCreate) {
+						if err := permissions.CreateAuthRelationships(ctx, "tenant", objID, relationships...); err != nil {
+							return nil, fmt.Errorf("relationship request failed with error: %w", err)
+						}
 					}
 
 					if _, err := m.EventsPublisher.PublishChange(ctx, "tenant", msg); err != nil {
@@ -218,23 +217,22 @@ func TenantHooks() []ent.Hook {
 
 					if dbObj.ParentTenantID != gidx.NullPrefixedID {
 						additionalSubjects = append(additionalSubjects, dbObj.ParentTenantID)
-
 						relationships = append(relationships, events.AuthRelationshipRelation{
 							Relation:  "parent",
 							SubjectID: dbObj.ParentTenantID,
 						})
 					}
 
-					if len(relationships) != 0 {
-						if err := permissions.DeleteAuthRelationships(ctx, "tenant", objID, relationships...); err != nil {
-							return nil, fmt.Errorf("relationship request failed with error: %w", err)
-						}
-					}
-
 					// we have all the info we need, now complete the mutation before we process the event
 					retValue, err := next.Mutate(ctx, m)
 					if err != nil {
 						return retValue, err
+					}
+
+					if len(relationships) != 0 {
+						if err := permissions.DeleteAuthRelationships(ctx, "tenant", objID, relationships...); err != nil {
+							return nil, fmt.Errorf("relationship request failed with error: %w", err)
+						}
 					}
 
 					msg := events.ChangeMessage{
