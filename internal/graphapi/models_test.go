@@ -3,7 +3,7 @@ package graphapi_test
 import (
 	"context"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"
 )
