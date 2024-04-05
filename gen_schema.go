@@ -86,6 +86,8 @@ func main() {
 	intObj := schema.Directives["interfaceObject"]
 	intObj.Position.Src.BuiltIn = false
 	schema.Types["FieldSet"].BuiltIn = false
+	schema.Types["federation__Policy"].BuiltIn = false
+	schema.Types["federation__Scope"].BuiltIn = false
 
 	clientSchema, err := os.Create("internal/testclient/schema/schema.graphql")
 	if err != nil {

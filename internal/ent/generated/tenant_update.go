@@ -48,6 +48,14 @@ func (tu *TenantUpdate) SetName(s string) *TenantUpdate {
 	return tu
 }
 
+// SetNillableName sets the "name" field if the given value is not nil.
+func (tu *TenantUpdate) SetNillableName(s *string) *TenantUpdate {
+	if s != nil {
+		tu.SetName(*s)
+	}
+	return tu
+}
+
 // SetDescription sets the "description" field.
 func (tu *TenantUpdate) SetDescription(s string) *TenantUpdate {
 	tu.mutation.SetDescription(s)
@@ -234,6 +242,14 @@ type TenantUpdateOne struct {
 // SetName sets the "name" field.
 func (tuo *TenantUpdateOne) SetName(s string) *TenantUpdateOne {
 	tuo.mutation.SetName(s)
+	return tuo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (tuo *TenantUpdateOne) SetNillableName(s *string) *TenantUpdateOne {
+	if s != nil {
+		tuo.SetName(*s)
+	}
 	return tuo
 }
 

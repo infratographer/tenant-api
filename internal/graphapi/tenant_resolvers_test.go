@@ -163,6 +163,7 @@ func TestTenantChildrenSorting(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, resp.Tenant)
 			require.Len(t, resp.Tenant.Children.Edges, len(tt.ResponseOrder))
+
 			for i, tnt := range tt.ResponseOrder {
 				respTnt := resp.Tenant.Children.Edges[i].Node
 				require.Equal(t, tnt.ID, respTnt.ID)

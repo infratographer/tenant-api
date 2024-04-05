@@ -42,6 +42,9 @@ type CreateTenantInput struct {
 	ParentID    *gidx.PrefixedID `json:"parentID,omitempty"`
 }
 
+type Mutation struct {
+}
+
 // Information about pagination in a connection.
 // https://relay.dev/graphql/connections.htm#sec-undefined.PageInfo
 type PageInfo struct {
@@ -55,6 +58,9 @@ type PageInfo struct {
 	EndCursor *string `json:"endCursor,omitempty"`
 }
 
+type Query struct {
+}
+
 type Tenant struct {
 	// ID for the tenant.
 	ID        gidx.PrefixedID `json:"id"`
@@ -63,9 +69,9 @@ type Tenant struct {
 	// The name of a tenant.
 	Name string `json:"name"`
 	// An optional description of the tenant.
-	Description *string          `json:"description,omitempty"`
-	Parent      *Tenant          `json:"parent,omitempty"`
-	Children    TenantConnection `json:"children"`
+	Description *string           `json:"description,omitempty"`
+	Parent      *Tenant           `json:"parent,omitempty"`
+	Children    *TenantConnection `json:"children"`
 }
 
 func (Tenant) IsMetadataNode()             {}
@@ -84,7 +90,7 @@ type TenantConnection struct {
 	// A list of edges.
 	Edges []*TenantEdge `json:"edges,omitempty"`
 	// Information to aid in pagination.
-	PageInfo PageInfo `json:"pageInfo"`
+	PageInfo *PageInfo `json:"pageInfo"`
 	// Identifies the total count of items in the connection.
 	TotalCount int64 `json:"totalCount"`
 }
@@ -92,7 +98,7 @@ type TenantConnection struct {
 // Return response from tenantCreate.
 type TenantCreatePayload struct {
 	// The created tenant.
-	Tenant Tenant `json:"tenant"`
+	Tenant *Tenant `json:"tenant"`
 }
 
 // Return response from tenantDelete.
@@ -120,7 +126,7 @@ type TenantOrder struct {
 // Return response from tenantUpdate.
 type TenantUpdatePayload struct {
 	// The updated tenant.
-	Tenant Tenant `json:"tenant"`
+	Tenant *Tenant `json:"tenant"`
 }
 
 // TenantWhereInput is used for filtering Tenant objects.

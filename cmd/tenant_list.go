@@ -50,12 +50,14 @@ func listTenant(cmd *cobra.Command, _ []string) {
 		}
 	} else if only, _ := cmd.Flags().GetString("only"); only != "" {
 		onlyID, _ := gidx.Parse(only)
+
 		tenants, err = query.Where(tenant.IDEQ(onlyID)).All(cmd.Context())
 		if err != nil {
 			logger.Fatalw("failed to get tenant", "error", err)
 		}
 	} else if parent, _ := cmd.Flags().GetString("parent"); parent != "" {
 		parentID, _ := gidx.Parse(parent)
+
 		tenants, err = query.Where(tenant.ParentTenantIDEQ(parentID)).All(cmd.Context())
 		if err != nil {
 			logger.Fatalw("failed to query all children", "error", err)

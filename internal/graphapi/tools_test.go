@@ -124,7 +124,7 @@ func setupDB() {
 		}
 	case dialect.Postgres:
 		log.Println("Running database migrations")
-		goosex.MigrateUp(uri, db.Migrations)
+		goosex.MigrateUpContext(context.Background(), uri, db.Migrations)
 	}
 
 	testTools.dbContainer = cntr

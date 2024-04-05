@@ -27,6 +27,7 @@ import (
 // NewExecutableSchema creates an ExecutableSchema from the ResolverRoot interface.
 func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 	return &executableSchema{
+		schema:     cfg.Schema,
 		resolvers:  cfg.Resolvers,
 		directives: cfg.Directives,
 		complexity: cfg.Complexity,
@@ -34,6 +35,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 }
 
 type Config struct {
+	Schema     *ast.Schema
 	Resolvers  ResolverRoot
 	Directives DirectiveRoot
 	Complexity ComplexityRoot
@@ -46,7 +48,6 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	ComposeDirective func(ctx context.Context, obj interface{}, next graphql.Resolver, name string) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -124,12 +125,16 @@ type QueryResolver interface {
 }
 
 type executableSchema struct {
+	schema     *ast.Schema
 	resolvers  ResolverRoot
 	directives DirectiveRoot
 	complexity ComplexityRoot
 }
 
 func (e *executableSchema) Schema() *ast.Schema {
+	if e.schema != nil {
+		return e.schema
+	}
 	return parsedSchema
 }
 
@@ -460,24 +465,30 @@ func (ec *executionContext) introspectSchema() (*introspection.Schema, error) {
 	if ec.DisableIntrospection {
 		return nil, errors.New("introspection disabled")
 	}
-	return introspection.WrapSchema(parsedSchema), nil
+	return introspection.WrapSchema(ec.Schema()), nil
 }
 
 func (ec *executionContext) introspectType(name string) (*introspection.Type, error) {
 	if ec.DisableIntrospection {
 		return nil, errors.New("introspection disabled")
 	}
-	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
+	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
 var sources = []*ast.Source{
 	{Name: "../../schema/ent.graphql", Input: `directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 directive @goModel(model: String, models: [String!]) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
-"""Input information to create a tenant."""
+"""
+Input information to create a tenant.
+"""
 input CreateTenantInput {
-  """The name of a tenant."""
+  """
+  The name of a tenant.
+  """
   name: String!
-  """An optional description of the tenant."""
+  """
+  An optional description of the tenant.
+  """
   description: String
   parentID: ID
 }
@@ -486,21 +497,31 @@ Define a Relay Cursor type:
 https://relay.dev/graphql/connections.htm#sec-Cursor
 """
 scalar Cursor
-"""A valid JSON string."""
+"""
+A valid JSON string.
+"""
 scalar JSON
 """
 An object with an ID.
 Follows the [Relay Global Object Identification Specification](https://relay.dev/graphql/objectidentification.htm)
 """
 interface Node {
-  """The id of the object."""
+  """
+  The id of the object.
+  """
   id: ID!
 }
-"""Possible directions in which to order a list of items when provided an ` + "`" + `orderBy` + "`" + ` argument."""
+"""
+Possible directions in which to order a list of items when provided an ` + "`" + `orderBy` + "`" + ` argument.
+"""
 enum OrderDirection {
-  """Specifies an ascending order for a given ` + "`" + `orderBy` + "`" + ` argument."""
+  """
+  Specifies an ascending order for a given ` + "`" + `orderBy` + "`" + ` argument.
+  """
   ASC
-  """Specifies a descending order for a given ` + "`" + `orderBy` + "`" + ` argument."""
+  """
+  Specifies a descending order for a given ` + "`" + `orderBy` + "`" + ` argument.
+  """
   DESC
 }
 """
@@ -508,70 +529,118 @@ Information about pagination in a connection.
 https://relay.dev/graphql/connections.htm#sec-undefined.PageInfo
 """
 type PageInfo @shareable {
-  """When paginating forwards, are there more items?"""
+  """
+  When paginating forwards, are there more items?
+  """
   hasNextPage: Boolean!
-  """When paginating backwards, are there more items?"""
+  """
+  When paginating backwards, are there more items?
+  """
   hasPreviousPage: Boolean!
-  """When paginating backwards, the cursor to continue."""
+  """
+  When paginating backwards, the cursor to continue.
+  """
   startCursor: Cursor
-  """When paginating forwards, the cursor to continue."""
+  """
+  When paginating forwards, the cursor to continue.
+  """
   endCursor: Cursor
 }
 type Query
 type Tenant implements Node & ResourceOwner & MetadataNode @key(fields: "id") @prefixedID(prefix: "tnntten") @infratographerRoles(hasRoles: true, hasParentRoles: true) {
-  """ID for the tenant."""
+  """
+  ID for the tenant.
+  """
   id: ID!
   createdAt: Time!
   updatedAt: Time!
-  """The name of a tenant."""
+  """
+  The name of a tenant.
+  """
   name: String!
-  """An optional description of the tenant."""
+  """
+  An optional description of the tenant.
+  """
   description: String
   parent: Tenant
   children(
-    """Returns the elements in the list that come after the specified cursor."""
+    """
+    Returns the elements in the list that come after the specified cursor.
+    """
     after: Cursor
 
-    """Returns the first _n_ elements from the list."""
+    """
+    Returns the first _n_ elements from the list.
+    """
     first: Int
 
-    """Returns the elements in the list that come before the specified cursor."""
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
     before: Cursor
 
-    """Returns the last _n_ elements from the list."""
+    """
+    Returns the last _n_ elements from the list.
+    """
     last: Int
 
-    """Ordering options for Tenants returned from the connection."""
+    """
+    Ordering options for Tenants returned from the connection.
+    """
     orderBy: TenantOrder
 
-    """Filtering options for Tenants returned from the connection."""
+    """
+    Filtering options for Tenants returned from the connection.
+    """
     where: TenantWhereInput
   ): TenantConnection!
 }
-"""A connection to a list of items."""
+"""
+A connection to a list of items.
+"""
 type TenantConnection {
-  """A list of edges."""
+  """
+  A list of edges.
+  """
   edges: [TenantEdge]
-  """Information to aid in pagination."""
+  """
+  Information to aid in pagination.
+  """
   pageInfo: PageInfo!
-  """Identifies the total count of items in the connection."""
+  """
+  Identifies the total count of items in the connection.
+  """
   totalCount: Int!
 }
-"""An edge in a connection."""
+"""
+An edge in a connection.
+"""
 type TenantEdge {
-  """The item at the end of the edge."""
+  """
+  The item at the end of the edge.
+  """
   node: Tenant
-  """A cursor for use in pagination."""
+  """
+  A cursor for use in pagination.
+  """
   cursor: Cursor!
 }
-"""Ordering options for Tenant connections"""
+"""
+Ordering options for Tenant connections
+"""
 input TenantOrder {
-  """The ordering direction."""
+  """
+  The ordering direction.
+  """
   direction: OrderDirection! = ASC
-  """The field by which to order Tenants."""
+  """
+  The field by which to order Tenants.
+  """
   field: TenantOrderField!
 }
-"""Properties by which Tenant connections can be ordered."""
+"""
+Properties by which Tenant connections can be ordered.
+"""
 enum TenantOrderField {
   CREATED_AT
   UPDATED_AT
@@ -585,7 +654,9 @@ input TenantWhereInput {
   not: TenantWhereInput
   and: [TenantWhereInput!]
   or: [TenantWhereInput!]
-  """id field predicates"""
+  """
+  id field predicates
+  """
   id: ID
   idNEQ: ID
   idIn: [ID!]
@@ -594,7 +665,9 @@ input TenantWhereInput {
   idGTE: ID
   idLT: ID
   idLTE: ID
-  """created_at field predicates"""
+  """
+  created_at field predicates
+  """
   createdAt: Time
   createdAtNEQ: Time
   createdAtIn: [Time!]
@@ -603,7 +676,9 @@ input TenantWhereInput {
   createdAtGTE: Time
   createdAtLT: Time
   createdAtLTE: Time
-  """updated_at field predicates"""
+  """
+  updated_at field predicates
+  """
   updatedAt: Time
   updatedAtNEQ: Time
   updatedAtIn: [Time!]
@@ -612,20 +687,32 @@ input TenantWhereInput {
   updatedAtGTE: Time
   updatedAtLT: Time
   updatedAtLTE: Time
-  """parent edge predicates"""
+  """
+  parent edge predicates
+  """
   hasParent: Boolean
   hasParentWith: [TenantWhereInput!]
-  """children edge predicates"""
+  """
+  children edge predicates
+  """
   hasChildren: Boolean
   hasChildrenWith: [TenantWhereInput!]
 }
-"""The builtin Time type"""
+"""
+The builtin Time type
+"""
 scalar Time
-"""Input information to update a tenant."""
+"""
+Input information to update a tenant.
+"""
 input UpdateTenantInput {
-  """The name of a tenant."""
+  """
+  The name of a tenant.
+  """
   name: String
-  """An optional description of the tenant."""
+  """
+  An optional description of the tenant.
+  """
   description: String
   clearDescription: Boolean
 }
@@ -704,6 +791,7 @@ type TenantDeletePayload {
 }
 `, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
+	directive @authenticated on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
 	directive @composeDirective(name: String!) repeatable on SCHEMA
 	directive @extends on OBJECT | INTERFACE
 	directive @external on OBJECT | FIELD_DEFINITION
@@ -721,9 +809,21 @@ type TenantDeletePayload {
 	  | UNION
 	directive @interfaceObject on OBJECT
 	directive @link(import: [String!], url: String!) repeatable on SCHEMA
-	directive @override(from: String!) on FIELD_DEFINITION
+	directive @override(from: String!, label: String) on FIELD_DEFINITION
+	directive @policy(policies: [[federation__Policy!]!]!) on 
+	  | FIELD_DEFINITION
+	  | OBJECT
+	  | INTERFACE
+	  | SCALAR
+	  | ENUM
 	directive @provides(fields: FieldSet!) on FIELD_DEFINITION
 	directive @requires(fields: FieldSet!) on FIELD_DEFINITION
+	directive @requiresScopes(scopes: [[federation__Scope!]!]!) on 
+	  | FIELD_DEFINITION
+	  | OBJECT
+	  | INTERFACE
+	  | SCALAR
+	  | ENUM
 	directive @shareable repeatable on FIELD_DEFINITION | OBJECT
 	directive @tag(name: String!) repeatable on
 	  | ARGUMENT_DEFINITION
@@ -738,6 +838,8 @@ type TenantDeletePayload {
 	  | UNION
 	scalar _Any
 	scalar FieldSet
+	scalar federation__Policy
+	scalar federation__Scope
 `, BuiltIn: true},
 	{Name: "../../federation/entity.graphql", Input: `
 # a union of all types that use the @key directive
@@ -764,21 +866,6 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
-
-func (ec *executionContext) dir_composeDirective_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg0
-	return args, nil
-}
 
 func (ec *executionContext) field_Entity_findTenantByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -4289,8 +4376,6 @@ func (ec *executionContext) unmarshalInputCreateTenantInput(ctx context.Context,
 		}
 		switch k {
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -4298,8 +4383,6 @@ func (ec *executionContext) unmarshalInputCreateTenantInput(ctx context.Context,
 			}
 			it.Name = data
 		case "description":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -4307,8 +4390,6 @@ func (ec *executionContext) unmarshalInputCreateTenantInput(ctx context.Context,
 			}
 			it.Description = data
 		case "parentID":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
 			data, err := ec.unmarshalOID2ᚖgoᚗinfratographerᚗcomᚋxᚋgidxᚐPrefixedID(ctx, v)
 			if err != nil {
@@ -4340,8 +4421,6 @@ func (ec *executionContext) unmarshalInputTenantOrder(ctx context.Context, obj i
 		}
 		switch k {
 		case "direction":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
 			data, err := ec.unmarshalNOrderDirection2entgoᚗioᚋcontribᚋentgqlᚐOrderDirection(ctx, v)
 			if err != nil {
@@ -4349,8 +4428,6 @@ func (ec *executionContext) unmarshalInputTenantOrder(ctx context.Context, obj i
 			}
 			it.Direction = data
 		case "field":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
 			data, err := ec.unmarshalNTenantOrderField2ᚖgoᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋentᚋgeneratedᚐTenantOrderField(ctx, v)
 			if err != nil {
@@ -4378,8 +4455,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 		}
 		switch k {
 		case "not":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("not"))
 			data, err := ec.unmarshalOTenantWhereInput2ᚖgoᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋentᚋgeneratedᚐTenantWhereInput(ctx, v)
 			if err != nil {
@@ -4387,8 +4462,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.Not = data
 		case "and":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("and"))
 			data, err := ec.unmarshalOTenantWhereInput2ᚕᚖgoᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋentᚋgeneratedᚐTenantWhereInputᚄ(ctx, v)
 			if err != nil {
@@ -4396,8 +4469,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.And = data
 		case "or":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("or"))
 			data, err := ec.unmarshalOTenantWhereInput2ᚕᚖgoᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋentᚋgeneratedᚐTenantWhereInputᚄ(ctx, v)
 			if err != nil {
@@ -4405,8 +4476,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.Or = data
 		case "id":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 			data, err := ec.unmarshalOID2ᚖgoᚗinfratographerᚗcomᚋxᚋgidxᚐPrefixedID(ctx, v)
 			if err != nil {
@@ -4414,8 +4483,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.ID = data
 		case "idNEQ":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNEQ"))
 			data, err := ec.unmarshalOID2ᚖgoᚗinfratographerᚗcomᚋxᚋgidxᚐPrefixedID(ctx, v)
 			if err != nil {
@@ -4423,8 +4490,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.IDNEQ = data
 		case "idIn":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idIn"))
 			data, err := ec.unmarshalOID2ᚕgoᚗinfratographerᚗcomᚋxᚋgidxᚐPrefixedIDᚄ(ctx, v)
 			if err != nil {
@@ -4432,8 +4497,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.IDIn = data
 		case "idNotIn":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNotIn"))
 			data, err := ec.unmarshalOID2ᚕgoᚗinfratographerᚗcomᚋxᚋgidxᚐPrefixedIDᚄ(ctx, v)
 			if err != nil {
@@ -4441,8 +4504,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.IDNotIn = data
 		case "idGT":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGT"))
 			data, err := ec.unmarshalOID2ᚖgoᚗinfratographerᚗcomᚋxᚋgidxᚐPrefixedID(ctx, v)
 			if err != nil {
@@ -4450,8 +4511,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.IDGT = data
 		case "idGTE":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGTE"))
 			data, err := ec.unmarshalOID2ᚖgoᚗinfratographerᚗcomᚋxᚋgidxᚐPrefixedID(ctx, v)
 			if err != nil {
@@ -4459,8 +4518,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.IDGTE = data
 		case "idLT":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLT"))
 			data, err := ec.unmarshalOID2ᚖgoᚗinfratographerᚗcomᚋxᚋgidxᚐPrefixedID(ctx, v)
 			if err != nil {
@@ -4468,8 +4525,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.IDLT = data
 		case "idLTE":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLTE"))
 			data, err := ec.unmarshalOID2ᚖgoᚗinfratographerᚗcomᚋxᚋgidxᚐPrefixedID(ctx, v)
 			if err != nil {
@@ -4477,8 +4532,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.IDLTE = data
 		case "createdAt":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
@@ -4486,8 +4539,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.CreatedAt = data
 		case "createdAtNEQ":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtNEQ"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
@@ -4495,8 +4546,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.CreatedAtNEQ = data
 		case "createdAtIn":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtIn"))
 			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
 			if err != nil {
@@ -4504,8 +4553,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.CreatedAtIn = data
 		case "createdAtNotIn":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtNotIn"))
 			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
 			if err != nil {
@@ -4513,8 +4560,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.CreatedAtNotIn = data
 		case "createdAtGT":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtGT"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
@@ -4522,8 +4567,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.CreatedAtGT = data
 		case "createdAtGTE":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtGTE"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
@@ -4531,8 +4574,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.CreatedAtGTE = data
 		case "createdAtLT":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtLT"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
@@ -4540,8 +4581,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.CreatedAtLT = data
 		case "createdAtLTE":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtLTE"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
@@ -4549,8 +4588,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.CreatedAtLTE = data
 		case "updatedAt":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
@@ -4558,8 +4595,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.UpdatedAt = data
 		case "updatedAtNEQ":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAtNEQ"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
@@ -4567,8 +4602,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.UpdatedAtNEQ = data
 		case "updatedAtIn":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAtIn"))
 			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
 			if err != nil {
@@ -4576,8 +4609,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.UpdatedAtIn = data
 		case "updatedAtNotIn":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAtNotIn"))
 			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
 			if err != nil {
@@ -4585,8 +4616,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.UpdatedAtNotIn = data
 		case "updatedAtGT":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAtGT"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
@@ -4594,8 +4623,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.UpdatedAtGT = data
 		case "updatedAtGTE":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAtGTE"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
@@ -4603,8 +4630,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.UpdatedAtGTE = data
 		case "updatedAtLT":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAtLT"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
@@ -4612,8 +4637,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.UpdatedAtLT = data
 		case "updatedAtLTE":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAtLTE"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
@@ -4621,8 +4644,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.UpdatedAtLTE = data
 		case "hasParent":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasParent"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -4630,8 +4651,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.HasParent = data
 		case "hasParentWith":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasParentWith"))
 			data, err := ec.unmarshalOTenantWhereInput2ᚕᚖgoᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋentᚋgeneratedᚐTenantWhereInputᚄ(ctx, v)
 			if err != nil {
@@ -4639,8 +4658,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.HasParentWith = data
 		case "hasChildren":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasChildren"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -4648,8 +4665,6 @@ func (ec *executionContext) unmarshalInputTenantWhereInput(ctx context.Context, 
 			}
 			it.HasChildren = data
 		case "hasChildrenWith":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasChildrenWith"))
 			data, err := ec.unmarshalOTenantWhereInput2ᚕᚖgoᚗinfratographerᚗcomᚋtenantᚑapiᚋinternalᚋentᚋgeneratedᚐTenantWhereInputᚄ(ctx, v)
 			if err != nil {
@@ -4677,8 +4692,6 @@ func (ec *executionContext) unmarshalInputUpdateTenantInput(ctx context.Context,
 		}
 		switch k {
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -4686,8 +4699,6 @@ func (ec *executionContext) unmarshalInputUpdateTenantInput(ctx context.Context,
 			}
 			it.Name = data
 		case "description":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -4695,8 +4706,6 @@ func (ec *executionContext) unmarshalInputUpdateTenantInput(ctx context.Context,
 			}
 			it.Description = data
 		case "clearDescription":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDescription"))
 			data, err := ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
@@ -6313,6 +6322,164 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNfederation__Policy2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNfederation__Policy2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNfederation__Policy2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Policy2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Policy2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Policy2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNfederation__Policy2ᚕᚕstringᚄ(ctx context.Context, v interface{}) ([][]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([][]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Policy2ᚕstringᚄ(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Policy2ᚕᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v [][]string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Policy2ᚕstringᚄ(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNfederation__Scope2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNfederation__Scope2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNfederation__Scope2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Scope2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Scope2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Scope2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNfederation__Scope2ᚕᚕstringᚄ(ctx context.Context, v interface{}) ([][]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([][]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Scope2ᚕstringᚄ(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v [][]string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Scope2ᚕstringᚄ(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
