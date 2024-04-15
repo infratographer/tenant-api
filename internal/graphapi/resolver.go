@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/99designs/gqlgen-contrib/prometheus"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/labstack/echo/v4"
 	"github.com/wundergraph/graphql-go-tools/pkg/playground"
@@ -57,6 +58,9 @@ func (r *Resolver) Handler(withPlayground bool, middleware []echo.MiddlewareFunc
 	)
 
 	srv.Use(oteltracing.Tracer{})
+
+	prometheus.Register()
+	srv.Use(prometheus.Tracer{})
 
 	h := &Handler{
 		r:              r,
