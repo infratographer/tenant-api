@@ -13,7 +13,7 @@ require (
 	github.com/brianvoe/gofakeit/v7 v7.0.2
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/labstack/echo-jwt/v4 v4.2.0
-	github.com/labstack/echo/v4 v4.11.4
+	github.com/labstack/echo/v4 v4.12.0
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/spf13/cobra v1.8.0
