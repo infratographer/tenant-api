@@ -126,7 +126,6 @@ func serve(ctx context.Context) {
 
 	perms, err := permissions.New(config.AppConfig.Permissions,
 		permissions.WithLogger(logger),
-		permissions.WithDefaultChecker(permissions.DefaultAllowChecker),
 		permissions.WithEventsPublisher(events),
 	)
 	if err != nil {
