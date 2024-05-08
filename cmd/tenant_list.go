@@ -9,8 +9,6 @@ import (
 	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/gidx"
 
-	"go.infratographer.com/permissions-api/pkg/permissions"
-
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"
 	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
 )
@@ -25,7 +23,6 @@ func init() {
 	tenantCmd.AddCommand(tenantList)
 
 	events.MustViperFlags(viper.GetViper(), tenantList.Flags(), appName)
-	permissions.MustViperFlags(viper.GetViper(), tenantList.Flags())
 
 	tenantList.Flags().Bool("all", false, "query all")
 	tenantList.Flags().String("only", "", "only get the provided tenant id")

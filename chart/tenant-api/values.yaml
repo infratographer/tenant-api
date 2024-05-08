@@ -35,6 +35,7 @@ api:
   extraLabels: {}
   extraAnnotations: {}
   extraEnvVars: {}
+  extraVolumes: []
   resources: {}
   podSecurityContext: {}
   securityContext: {}
@@ -65,14 +66,6 @@ api:
     certMountPath: /dbcerts
     migrateOnInit: true
 
-  permissions:
-    url: ""
-
-  oidc:
-    audience: ""
-    issuer: ""
-    refreshTimeout: 1m
-
   shutdownGracePeriod: 5s
 
   trustedProxies: []
@@ -99,6 +92,14 @@ api:
       endpoint: ""
       # insecure is true if TLS should not be required when sending traces
       insecure: false
+
+# -- iam-runtime-infratographer defines the configuration for the runtime.
+# ref: https://github.com/infratographer/iam-runtime-infratographer/tree/main/chart/iam-runtime-infratographer
+iam-runtime-infratographer:
+  config:
+    events:
+      nats:
+        credsFile: /nats/creds
 
 serviceMonitor:
   enabled: false

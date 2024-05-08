@@ -9,20 +9,18 @@ import (
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
-	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/metal-toolbox/iam-runtime-contrib/iamruntime"
+	"github.com/metal-toolbox/iam-runtime-contrib/middleware/echo/iamruntimemiddleware"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.infratographer.com/x/crdbx"
-	"go.infratographer.com/x/echojwtx"
 	"go.infratographer.com/x/echox"
 	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/otelx"
 	"go.infratographer.com/x/versionx"
 	"go.uber.org/zap"
-
-	"go.infratographer.com/permissions-api/pkg/permissions"
 
 	"go.infratographer.com/tenant-api/internal/config"
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"
@@ -54,9 +52,8 @@ func init() {
 	rootCmd.AddCommand(serveCmd)
 
 	echox.MustViperFlags(viper.GetViper(), serveCmd.Flags(), APIDefaultListen)
-	echojwtx.MustViperFlags(viper.GetViper(), serveCmd.Flags())
 	events.MustViperFlags(viper.GetViper(), serveCmd.Flags(), appName)
-	permissions.MustViperFlags(viper.GetViper(), serveCmd.Flags())
+	config.MustViperFlags(viper.GetViper(), serveCmd.Flags())
 
 	// only available as a CLI arg because it shouldn't be something that could accidentially end up in a config file or env var
 	serveCmd.Flags().BoolVar(&serveDevMode, "dev", false, "dev mode: enables playground, disables all auth checks, sets CORS to allow all, pretty logging, etc.")
@@ -64,13 +61,15 @@ func init() {
 }
 
 func serve(ctx context.Context) {
+	iamMiddlewareConfig := iamruntimemiddleware.NewConfig()
+
 	if serveDevMode {
 		enablePlayground = true
 		config.AppConfig.Logging.Debug = true
 		config.AppConfig.Logging.Pretty = true
 		config.AppConfig.Server.WithMiddleware(middleware.CORS())
-		// this is a hack, echojwt needs to be updated to go into AppConfig
-		viper.Set("oidc.enabled", false)
+
+		iamMiddlewareConfig.Skipper = func(_ echo.Context) bool { return true }
 	}
 
 	events, err := events.NewConnection(config.AppConfig.Events, events.WithLogger(logger))
@@ -113,26 +112,17 @@ func serve(ctx context.Context) {
 
 	var middleware []echo.MiddlewareFunc
 
-	if authConfig := config.AppConfig.OIDC; authConfig.Issuer != "" {
-		auth, err := echojwtx.NewAuth(ctx, authConfig, echojwtx.WithJWTConfig(echojwt.Config{
-			Skipper: echox.SkipDefaultEndpoints,
-		}))
-		if err != nil {
-			logger.Fatal("failed to initialize jwt authentication", zap.Error(err))
-		}
-
-		middleware = append(middleware, auth.Middleware())
-	}
-
-	perms, err := permissions.New(config.AppConfig.Permissions,
-		permissions.WithLogger(logger),
-		permissions.WithEventsPublisher(events),
-	)
+	runtime, err := iamruntime.NewClient(config.AppConfig.RuntimeSocket)
 	if err != nil {
-		logger.Fatal("failed to initialize permissions", zap.Error(err))
+		logger.Fatal("failed to initialize IAM runtime", zap.Error(err))
 	}
 
-	middleware = append(middleware, perms.Middleware())
+	iamMiddleware, err := iamMiddlewareConfig.WithRuntime(runtime).ToMiddleware()
+	if err != nil {
+		logger.Fatal("failed to initialize IAM runtime middleware", zap.Error(err))
+	}
+
+	middleware = append(middleware, iamMiddleware)
 
 	r := graphapi.NewResolver(client, logger.Named("resolvers"))
 	handler := r.Handler(enablePlayground, middleware)

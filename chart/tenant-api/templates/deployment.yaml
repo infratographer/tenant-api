@@ -24,8 +24,8 @@ spec:
       {{- if .Values.api.extraLabels }}
       {{- toYaml .Values.api.extraLabels | nindent 8 }}
       {{- end }}
+      annotations: {{- include "iam-runtime-infratographer.annotations" $ | nindent 8 }}
       {{- if .Values.api.extraAnnotations }}
-      annotations:
         {{- toYaml .Values.api.extraAnnotations | nindent 8 }}
       {{- end }}
     spec:
@@ -64,8 +64,6 @@ spec:
               value: ":{{ .Values.api.listenPort }}"
             - name: TENANTAPI_SERVER_SHUTDOWN_GRACE_PERIOD
               value: "{{ .Values.api.shutdownGracePeriod }}"
-            - name: TENANTAPI_PERMISSIONS_URL
-              value: "{{ .Values.api.permissions.url }}"
             - name: TENANTAPI_TRACING_ENABLED
               value: "{{ .Values.api.tracing.enabled }}"
             - name: TENANTAPI_TRACING_PROVIDER
@@ -119,20 +117,8 @@ spec:
             - name: TENANTAPI_EVENTS_NATS_CREDSFILE
               value: "{{ .Values.api.events.nats.credsFile }}"
           {{- end }}
-          {{- if .Values.api.oidc.issuer }}
-          {{- with .Values.api.oidc.audience }}
-            - name: TENANTAPI_OIDC_AUDIENCE
-              value: "{{ . }}"
-          {{- end }}
-          {{- with .Values.api.oidc.issuer }}
-            - name: TENANTAPI_OIDC_ISSUER
-              value: "{{ . }}"
-          {{- end }}
-          {{- with .Values.api.oidc.refreshTimeout }}
-            - name: TENANTAPI_OIDC_REFRESH_TIMEOUT
-              value: "{{ . }}"
-          {{- end }}
-          {{- end }}
+            - name: TENANTAPI_RUNTIMESOCKET
+              value: "unix:///var/iam-runtime/runtime.sock"
           envFrom:
             - secretRef:
                 name: {{ .Values.api.db.uriSecret }}
@@ -156,7 +142,7 @@ spec:
             httpGet:
               path: /readyz
               port: http
-          volumeMounts:
+          volumeMounts: {{- include "iam-runtime-infratographer.volumeMounts" $ | nindent 12 }}
             {{- if .Values.api.events.nats.credsSecretName  }}
             - name: events-creds
               mountPath: /nats
@@ -168,6 +154,7 @@ spec:
             {{- end }}
           resources:
             {{- toYaml .Values.api.resources | nindent 12 }}
+        - {{- include "iam-runtime-infratographer.container" $ | nindent 10 }}
       {{- with .Values.api.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -180,7 +167,7 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      volumes:
+      volumes: {{- include "iam-runtime-infratographer.volumes" $ | nindent 8 }}
         {{- if .Values.api.events.nats.credsSecretName  }}
         - name: events-creds
           secret:
@@ -191,3 +178,4 @@ spec:
           secret:
             secretName: "{{ .Values.api.db.certSecret }}"
         {{- end }}
+{{- include "iam-runtime-infratographer.configmap" $ }}

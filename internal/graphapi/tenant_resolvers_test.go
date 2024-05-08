@@ -5,11 +5,13 @@ import (
 	"testing"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/metal-toolbox/iam-runtime-contrib/iamruntime"
+	"github.com/metal-toolbox/iam-runtime-contrib/mockruntime"
+	"github.com/metal-toolbox/iam-runtime/pkg/iam/runtime/authorization"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.infratographer.com/permissions-api/pkg/permissions"
-	"go.infratographer.com/permissions-api/pkg/permissions/mockpermissions"
 	"go.infratographer.com/x/gidx"
 
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"
@@ -19,13 +21,12 @@ import (
 func TestTenantQueryByID(t *testing.T) {
 	ctx := context.Background()
 
-	perms := new(mockpermissions.MockPermissions)
-	perms.On("CreateAuthRelationships", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	runtime := new(mockruntime.MockRuntime)
+	runtime.On("CheckAccess", mock.Anything).Return(authorization.CheckAccessResponse_RESULT_ALLOWED, nil)
+	runtime.On("CreateRelationships", mock.Anything, mock.Anything).Return(nil)
 
-	ctx = perms.ContextWithHandler(ctx)
-
-	// Permit request
-	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultAllowChecker)
+	ctx = iamruntime.SetContextRuntime(ctx, runtime)
+	ctx = iamruntime.SetContextToken(ctx, &jwt.Token{})
 
 	tenant := TenantBuilder{}.MustNew(ctx)
 	tenantChild := TenantBuilder{Parent: tenant}.MustNew(ctx)
@@ -84,13 +85,12 @@ func TestTenantQueryByID(t *testing.T) {
 func TestTenantChildrenSorting(t *testing.T) {
 	ctx := context.Background()
 
-	perms := new(mockpermissions.MockPermissions)
-	perms.On("CreateAuthRelationships", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	runtime := new(mockruntime.MockRuntime)
+	runtime.On("CheckAccess", mock.Anything).Return(authorization.CheckAccessResponse_RESULT_ALLOWED, nil)
+	runtime.On("CreateRelationships", mock.Anything, mock.Anything).Return(nil)
 
-	ctx = perms.ContextWithHandler(ctx)
-
-	// Permit request
-	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultAllowChecker)
+	ctx = iamruntime.SetContextRuntime(ctx, runtime)
+	ctx = iamruntime.SetContextToken(ctx, &jwt.Token{})
 
 	tenant := TenantBuilder{}.MustNew(ctx)
 	nicole := TenantBuilder{Parent: tenant, Name: "Nicole"}.MustNew(ctx)
@@ -169,6 +169,8 @@ func TestTenantChildrenSorting(t *testing.T) {
 				require.Equal(t, tnt.ID, respTnt.ID)
 				require.Equal(t, tnt.Name, respTnt.Name)
 			}
+
+			runtime.AssertExpectations(t)
 		})
 	}
 }
@@ -176,13 +178,12 @@ func TestTenantChildrenSorting(t *testing.T) {
 func TestTenantChildrenWhereFiltering(t *testing.T) {
 	ctx := context.Background()
 
-	perms := new(mockpermissions.MockPermissions)
-	perms.On("CreateAuthRelationships", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	runtime := new(mockruntime.MockRuntime)
+	runtime.On("CheckAccess", mock.Anything).Return(authorization.CheckAccessResponse_RESULT_ALLOWED, nil)
+	runtime.On("CreateRelationships", mock.Anything, mock.Anything).Return(nil)
 
-	ctx = perms.ContextWithHandler(ctx)
-
-	// Permit request
-	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultAllowChecker)
+	ctx = iamruntime.SetContextRuntime(ctx, runtime)
+	ctx = iamruntime.SetContextToken(ctx, &jwt.Token{})
 
 	parent1 := TenantBuilder{}.MustNew(ctx)
 	parent1Child := TenantBuilder{Parent: parent1}.MustNew(ctx)
@@ -243,6 +244,8 @@ func TestTenantChildrenWhereFiltering(t *testing.T) {
 			require.Len(t, resp.Tenant.Children.Edges, 1)
 			assert.Equal(t, tt.ResponseChild.ID, resp.Tenant.Children.Edges[0].Node.ID)
 			assert.Equal(t, tt.ResponseChild.Name, resp.Tenant.Children.Edges[0].Node.Name)
+
+			runtime.AssertExpectations(t)
 		})
 	}
 }
@@ -255,30 +258,32 @@ func TestFullTenantLifecycle(t *testing.T) {
 
 	graphC := graphTestClient(testTools.entClient)
 
-	perms := new(mockpermissions.MockPermissions)
-	perms.On("CreateAuthRelationships", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	perms.On("DeleteAuthRelationships", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	permitRuntime := new(mockruntime.MockRuntime)
+	permitRuntime.On("CheckAccess", mock.Anything).Return(authorization.CheckAccessResponse_RESULT_ALLOWED, nil)
+	permitRuntime.On("CreateRelationships", mock.Anything, mock.Anything).Return(nil)
+	permitRuntime.On("DeleteRelationships", mock.Anything, mock.Anything).Return(nil)
 
-	ctx = perms.ContextWithHandler(ctx)
+	deniedRuntime := new(mockruntime.MockRuntime)
+	deniedRuntime.On("CheckAccess", mock.Anything).Return(authorization.CheckAccessResponse_RESULT_DENIED, nil)
 
-	// Deny request
-	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultDenyChecker)
+	permitCtx := iamruntime.SetContextRuntime(ctx, permitRuntime)
+	permitCtx = iamruntime.SetContextToken(permitCtx, &jwt.Token{})
+
+	deniedCtx := iamruntime.SetContextRuntime(ctx, deniedRuntime)
+	deniedCtx = iamruntime.SetContextToken(deniedCtx, &jwt.Token{})
 
 	// deny create the Root tenant
-	rootResp, err := graphC.TenantCreate(ctx, testclient.CreateTenantInput{
+	rootResp, err := graphC.TenantCreate(deniedCtx, testclient.CreateTenantInput{
 		Name:        name,
 		Description: &description,
 	})
 
 	require.Error(t, err)
-	require.ErrorContains(t, err, permissions.ErrPermissionDenied.Error())
+	require.ErrorContains(t, err, iamruntime.ErrAccessDenied.Error())
 	require.Nil(t, rootResp)
 
-	// Permit request
-	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultAllowChecker)
-
 	// create the Root tenant
-	rootResp, err = graphC.TenantCreate(ctx, testclient.CreateTenantInput{
+	rootResp, err = graphC.TenantCreate(permitCtx, testclient.CreateTenantInput{
 		Name:        name,
 		Description: &description,
 	})
@@ -294,22 +299,16 @@ func TestFullTenantLifecycle(t *testing.T) {
 	assert.Equal(t, "tnntten", rootTenant.ID.Prefix())
 	assert.Nil(t, rootTenant.Parent)
 
-	// Deny request
-	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultDenyChecker)
-
 	// Deny Update the tenant
 	newName := gofakeit.DomainName()
-	updatedTenantResp, err := graphC.TenantUpdate(ctx, rootTenant.ID, testclient.UpdateTenantInput{Name: &newName})
+	updatedTenantResp, err := graphC.TenantUpdate(deniedCtx, rootTenant.ID, testclient.UpdateTenantInput{Name: &newName})
 
 	require.Error(t, err)
-	require.ErrorContains(t, err, permissions.ErrPermissionDenied.Error())
+	require.ErrorContains(t, err, iamruntime.ErrAccessDenied.Error())
 	require.Nil(t, updatedTenantResp)
 
-	// Permit request
-	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultAllowChecker)
-
 	// Update the tenant
-	updatedTenantResp, err = graphC.TenantUpdate(ctx, rootTenant.ID, testclient.UpdateTenantInput{Name: &newName})
+	updatedTenantResp, err = graphC.TenantUpdate(permitCtx, rootTenant.ID, testclient.UpdateTenantInput{Name: &newName})
 
 	require.NoError(t, err)
 	require.NotNil(t, updatedTenantResp)
@@ -319,28 +318,22 @@ func TestFullTenantLifecycle(t *testing.T) {
 	assert.EqualValues(t, rootTenant.ID, updatedRootTenant.ID)
 	assert.Equal(t, newName, updatedRootTenant.Name)
 
-	// Deny request
-	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultDenyChecker)
-
 	// Deny query the tenant
-	queryRootResp, err := graphC.GetTenant(ctx, rootTenant.ID)
+	queryRootResp, err := graphC.GetTenant(deniedCtx, rootTenant.ID)
 
 	require.Error(t, err)
-	require.ErrorContains(t, err, permissions.ErrPermissionDenied.Error())
+	require.ErrorContains(t, err, iamruntime.ErrAccessDenied.Error())
 	require.Nil(t, queryRootResp)
 
-	// Permit request
-	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultAllowChecker)
-
 	// Query the tenant
-	queryRootResp, err = graphC.GetTenant(ctx, rootTenant.ID)
+	queryRootResp, err = graphC.GetTenant(permitCtx, rootTenant.ID)
 	require.NoError(t, err)
 	require.NotNil(t, queryRootResp)
 	require.NotNil(t, queryRootResp.Tenant)
 	require.Equal(t, newName, queryRootResp.Tenant.Name)
 
 	// Add a child tenant with no description
-	childResp, err := graphC.TenantCreate(ctx, testclient.CreateTenantInput{
+	childResp, err := graphC.TenantCreate(permitCtx, testclient.CreateTenantInput{
 		Name:     "child",
 		ParentID: &rootTenant.ID,
 	})
@@ -358,51 +351,48 @@ func TestFullTenantLifecycle(t *testing.T) {
 	assert.Equal(t, rootTenant.ID, childTenant.Parent.ID)
 
 	// Try to delete the root tenant, it should fail since there are children
-	deletedResp, err := graphC.TenantDelete(ctx, rootTenant.ID)
+	deletedResp, err := graphC.TenantDelete(permitCtx, rootTenant.ID)
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "tenant has children")
 	assert.Nil(t, deletedResp)
 
 	// delete the child tenant
-	deletedResp, err = graphC.TenantDelete(ctx, childTenant.ID)
+	deletedResp, err = graphC.TenantDelete(permitCtx, childTenant.ID)
 	require.NoError(t, err)
 	require.NotNil(t, deletedResp)
 	require.NotNil(t, deletedResp.TenantDelete)
 	assert.EqualValues(t, childTenant.ID, deletedResp.TenantDelete.DeletedID.String())
 
-	// Deny request
-	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultDenyChecker)
-
 	// Deny delete the root tenant
-	deletedResp, err = graphC.TenantDelete(ctx, rootTenant.ID)
+	deletedResp, err = graphC.TenantDelete(deniedCtx, rootTenant.ID)
 
 	require.Error(t, err)
-	require.ErrorContains(t, err, permissions.ErrPermissionDenied.Error())
+	require.ErrorContains(t, err, iamruntime.ErrAccessDenied.Error())
 	require.Nil(t, deletedResp)
 
-	// Permit request
-	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultAllowChecker)
-
 	// delete the root tenant
-	deletedResp, err = graphC.TenantDelete(ctx, rootTenant.ID)
+	deletedResp, err = graphC.TenantDelete(permitCtx, rootTenant.ID)
 	require.NoError(t, err)
 	require.NotNil(t, deletedResp)
 	require.NotNil(t, deletedResp.TenantDelete)
 	assert.EqualValues(t, rootTenant.ID, deletedResp.TenantDelete.DeletedID.String())
 
 	// Query the deleted root tenant to ensure it's no longer available
-	queryResp, err := graphC.GetTenant(ctx, rootTenant.ID)
+	queryResp, err := graphC.GetTenant(permitCtx, rootTenant.ID)
 	assert.Error(t, err)
 	assert.Nil(t, queryResp)
 	assert.ErrorContains(t, err, "tenant not found")
 
 	// Query the deleted tenant's child to ensure it's no longer available as well
-	queryResp, err = graphC.GetTenant(ctx, childTenant.ID)
+	queryResp, err = graphC.GetTenant(permitCtx, childTenant.ID)
 	assert.Error(t, err)
 	assert.Nil(t, queryResp)
 	assert.ErrorContains(t, err, "tenant not found")
 
+	permitRuntime.AssertNumberOfCalls(t, "CheckAccess", 9)
+	deniedRuntime.AssertNumberOfCalls(t, "CheckAccess", 4)
+
 	// only one of each call should be registered, as the root create/delete have no relationships.
-	perms.AssertNumberOfCalls(t, "CreateAuthRelationships", 1)
-	perms.AssertNumberOfCalls(t, "DeleteAuthRelationships", 1)
+	permitRuntime.AssertNumberOfCalls(t, "CreateRelationships", 1)
+	permitRuntime.AssertNumberOfCalls(t, "DeleteRelationships", 1)
 }
