@@ -7,9 +7,13 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/metal-toolbox/iam-runtime-contrib/iamruntime"
+	"github.com/metal-toolbox/iam-runtime-contrib/mockruntime"
+	"github.com/metal-toolbox/iam-runtime/pkg/iam/runtime/authorization"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.infratographer.com/permissions-api/pkg/permissions"
 	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/gidx"
 
@@ -19,8 +23,13 @@ import (
 func TestTenantPubsub(t *testing.T) {
 	ctx := context.Background()
 
-	// Permit request
-	ctx = context.WithValue(ctx, permissions.CheckerCtxKey, permissions.DefaultAllowChecker)
+	runtime := new(mockruntime.MockRuntime)
+	runtime.On("CheckAccess", mock.Anything).Return(authorization.CheckAccessResponse_RESULT_ALLOWED, nil)
+	runtime.On("CreateRelationships", mock.Anything, mock.Anything).Return(nil)
+	runtime.On("DeleteRelationships", mock.Anything, mock.Anything).Return(nil)
+
+	ctx = iamruntime.SetContextRuntime(ctx, runtime)
+	ctx = iamruntime.SetContextToken(ctx, &jwt.Token{})
 
 	name := gofakeit.DomainName()
 	description := gofakeit.Phrase()
@@ -31,26 +40,6 @@ func TestTenantPubsub(t *testing.T) {
 	require.NoError(t, err)
 
 	defer sub.Shutdown(ctx) //nolint:errcheck // skip check in test
-
-	perms, err := permissions.New(permissions.Config{}, permissions.WithEventsPublisher(sub))
-	if err != nil {
-		t.Fatalf("failed to initialize permissions: %s", err.Error())
-	}
-
-	ctx = context.WithValue(ctx, permissions.AuthRelationshipRequestHandlerCtxKey, perms)
-
-	authMsgs, err := sub.SubscribeAuthRelationshipRequests(ctx, ">")
-	require.NoError(t, err)
-
-	var authRequests int
-
-	go func() {
-		for msg := range authMsgs {
-			authRequests++
-
-			msg.Reply(ctx, events.AuthRelationshipResponse{}) //nolint:errcheck // reply to unblock request
-		}
-	}()
 
 	messages, err := sub.SubscribeChanges(ctx, ">")
 	require.NoError(t, err)
@@ -234,7 +223,8 @@ func TestTenantPubsub(t *testing.T) {
 	// expect created_at, updated_at, name, and description changeset
 	assert.Len(t, msg.FieldChanges, 0)
 
-	assert.Equal(t, 2, authRequests, "expected the number of auth requests to match the number of create/delete requests")
+	runtime.AssertNumberOfCalls(t, "CreateRelationships", 1)
+	runtime.AssertNumberOfCalls(t, "DeleteRelationships", 1)
 }
 
 func getSingleMessage[T any](t *testing.T, messages <-chan events.Message[T]) T {

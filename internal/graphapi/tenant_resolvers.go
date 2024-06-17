@@ -8,10 +8,11 @@ import (
 	"context"
 	"fmt"
 
-	"go.infratographer.com/permissions-api/pkg/permissions"
+	"github.com/metal-toolbox/iam-runtime-contrib/iamruntime"
+	"go.infratographer.com/x/gidx"
+
 	"go.infratographer.com/tenant-api/internal/ent/generated"
 	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
-	"go.infratographer.com/x/gidx"
 )
 
 // TenantCreate is the resolver for the tenantCreate field.
@@ -22,7 +23,7 @@ func (r *mutationResolver) TenantCreate(ctx context.Context, input generated.Cre
 		resource = *input.ParentID
 	}
 
-	if err := permissions.CheckAccess(ctx, resource, actionTenantCreate); err != nil {
+	if err := iamruntime.ContextCheckAccessTo(ctx, resource.String(), actionTenantCreate); err != nil {
 		return nil, err
 	}
 
@@ -36,7 +37,7 @@ func (r *mutationResolver) TenantCreate(ctx context.Context, input generated.Cre
 
 // TenantUpdate is the resolver for the tenantUpdate field.
 func (r *mutationResolver) TenantUpdate(ctx context.Context, id gidx.PrefixedID, input generated.UpdateTenantInput) (*TenantUpdatePayload, error) {
-	if err := permissions.CheckAccess(ctx, id, actionTenantUpdate); err != nil {
+	if err := iamruntime.ContextCheckAccessTo(ctx, id.String(), actionTenantUpdate); err != nil {
 		return nil, err
 	}
 
@@ -49,7 +50,7 @@ func (r *mutationResolver) TenantUpdate(ctx context.Context, id gidx.PrefixedID,
 
 // TenantDelete is the resolver for the tenantDelete field.
 func (r *mutationResolver) TenantDelete(ctx context.Context, id gidx.PrefixedID) (*TenantDeletePayload, error) {
-	if err := permissions.CheckAccess(ctx, id, actionTenantDelete); err != nil {
+	if err := iamruntime.ContextCheckAccessTo(ctx, id.String(), actionTenantDelete); err != nil {
 		return nil, err
 	}
 
@@ -71,7 +72,7 @@ func (r *mutationResolver) TenantDelete(ctx context.Context, id gidx.PrefixedID)
 
 // Tenant is the resolver for the tenant field.
 func (r *queryResolver) Tenant(ctx context.Context, id gidx.PrefixedID) (*generated.Tenant, error) {
-	if err := permissions.CheckAccess(ctx, id, actionTenantGet); err != nil {
+	if err := iamruntime.ContextCheckAccessTo(ctx, id.String(), actionTenantGet); err != nil {
 		return nil, err
 	}
 
