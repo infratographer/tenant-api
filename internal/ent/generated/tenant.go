@@ -213,12 +213,6 @@ func (t *Tenant) String() string {
 // IsEntity implement fedruntime.Entity
 func (t Tenant) IsEntity() {}
 
-// IsMetadataNode implements interface for MetadataNode
-func (t Tenant) IsMetadataNode() {}
-
-// IsResourceOwner implements interface for ResourceOwner
-func (t Tenant) IsResourceOwner() {}
-
 // NamedChildren returns the Children named value or an error if the edge was not
 // loaded in eager-loading with this name.
 func (t *Tenant) NamedChildren(name string) ([]*Tenant, error) {

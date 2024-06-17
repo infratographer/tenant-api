@@ -32,8 +32,16 @@ type Noder interface {
 	IsNode()
 }
 
+var tenantImplementors = []string{"Tenant", "Node", "ResourceOwner", "MetadataNode"}
+
 // IsNode implements the Node interface check for GQLGen.
-func (n *Tenant) IsNode() {}
+func (*Tenant) IsNode() {}
+
+// IsResourceOwner implements the ResourceOwner interface check for GQLGen.
+func (*Tenant) IsResourceOwner() {}
+
+// IsMetadataNode implements the MetadataNode interface check for GQLGen.
+func (*Tenant) IsMetadataNode() {}
 
 var errNodeInvalidID = &NotFoundError{"node"}
 
@@ -100,15 +108,12 @@ func (c *Client) noder(ctx context.Context, table string, id gidx.PrefixedID) (N
 		}
 		query := c.Tenant.Query().
 			Where(tenant.ID(uid))
-		query, err := query.CollectFields(ctx, "Tenant")
-		if err != nil {
-			return nil, err
+		if fc := graphql.GetFieldContext(ctx); fc != nil {
+			if err := query.collectField(ctx, true, graphql.GetOperationContext(ctx), fc.Field, nil, tenantImplementors...); err != nil {
+				return nil, err
+			}
 		}
-		n, err := query.Only(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return n, nil
+		return query.Only(ctx)
 	default:
 		return nil, fmt.Errorf("cannot resolve noder from table %q: %w", table, errNodeInvalidID)
 	}
@@ -185,7 +190,7 @@ func (c *Client) noders(ctx context.Context, table string, ids []gidx.PrefixedID
 	case tenant.Table:
 		query := c.Tenant.Query().
 			Where(tenant.IDIn(ids...))
-		query, err := query.CollectFields(ctx, "Tenant")
+		query, err := query.CollectFields(ctx, tenantImplementors...)
 		if err != nil {
 			return nil, err
 		}

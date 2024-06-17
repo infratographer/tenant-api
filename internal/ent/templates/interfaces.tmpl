@@ -1,13 +1,3 @@
-{{ define "model/additional/interfaces" }}
-  {{- if eq $.Name "Tenant" }}
-    // IsMetadataNode implements interface for MetadataNode
-    func ({{ $.Receiver }} {{ $.Name }}) IsMetadataNode() {}
-
-    // IsResourceOwner implements interface for ResourceOwner
-    func ({{ $.Receiver }} {{ $.Name }}) IsResourceOwner() {}
-  {{ end }}
-{{ end }}
-
 {{ define "interfaces" }}
 {{ $pkg := base $.Config.Package }}
 {{ template "header" $ }}
