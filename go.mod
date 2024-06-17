@@ -8,7 +8,7 @@ require (
 	entgo.io/contrib v0.5.0
 	entgo.io/ent v0.13.1
 	github.com/99designs/gqlgen v0.17.49
-	github.com/99designs/gqlgen-contrib v0.1.1-0.20230605152740-d49a0a0239a7
+	github.com/99designs/gqlgen-contrib v0.1.1-0.20240617120339-2c008e74bff2
 	github.com/Yamashou/gqlgenc v0.19.3
 	github.com/brianvoe/gofakeit/v7 v7.0.3
 	github.com/golang-jwt/jwt/v5 v5.2.1
