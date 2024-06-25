@@ -4,6 +4,6 @@ dependencies:
   version: 2.20.3
 - name: iam-runtime-infratographer
   repository: https://infratographer.github.io/charts
-  version: v0.4.3
-digest: sha256:a187507741c7965bac29d18039deea9a85385b7dd48c9ed9cb8ff40768e0406f
-generated: "2024-06-18T12:40:58.531501608Z"
+  version: v0.4.4
+digest: sha256:66a2d5b7859d5b80f394c6aa95de08ccf377f77cc1e9bd1dcea23205ad7c5126
+generated: "2024-06-25T20:13:19.72350407Z"
