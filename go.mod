@@ -1,12 +1,10 @@
 module go.infratographer.com/tenant-api
 
-go 1.22.1
-
-toolchain go1.22.4
+go 1.22.5
 
 require (
-	entgo.io/contrib v0.5.0
-	entgo.io/ent v0.13.1
+	entgo.io/contrib v0.6.0
+	entgo.io/ent v0.13.2-0.20240717044502-34158f2c129b
 	github.com/99designs/gqlgen v0.17.49
 	github.com/99designs/gqlgen-contrib v0.1.1-0.20240617120339-2c008e74bff2
 	github.com/Yamashou/gqlgenc v0.19.3
@@ -30,7 +28,7 @@ require (
 )
 
 require (
-	ariga.io/atlas v0.19.1-0.20240203083654-5948b60a8e43 // indirect
+	ariga.io/atlas v0.25.1-0.20240717145915-af51d3945208 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/MicahParks/jwkset v0.5.17 // indirect
@@ -41,6 +39,7 @@ require (
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
+	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -126,10 +125,10 @@ require (
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	github.com/vmihailenco/msgpack/v5 v5.0.0-beta.9 // indirect
-	github.com/vmihailenco/tagparser v0.1.2 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
-	github.com/zclconf/go-cty v1.8.0 // indirect
+	github.com/zclconf/go-cty v1.14.4 // indirect
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.52.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.52.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.52.0 // indirect
@@ -156,7 +155,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20240520151616-dc85e6b867a5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240520151616-dc85e6b867a5 // indirect
 	google.golang.org/grpc v1.64.0 // indirect
-	google.golang.org/protobuf v1.34.1 // indirect
+	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
