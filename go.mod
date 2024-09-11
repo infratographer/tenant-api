@@ -1,12 +1,12 @@
 module go.infratographer.com/tenant-api
 
-go 1.22.5
+go 1.23.0
 
-toolchain go1.22.6
+toolchain go1.23.1
 
 require (
 	entgo.io/contrib v0.6.0
-	entgo.io/ent v0.14.0
+	entgo.io/ent v0.14.1
 	github.com/99designs/gqlgen v0.17.49
 	github.com/99designs/gqlgen-contrib v0.1.1-0.20240617120339-2c008e74bff2
 	github.com/Yamashou/gqlgenc v0.19.3
