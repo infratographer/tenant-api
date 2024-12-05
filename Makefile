@@ -37,7 +37,7 @@ GCI_REPO = github.com/daixiang0/gci
 GCI_VERSION = v0.10.1
 
 GOLANGCI_LINT_REPO = github.com/golangci/golangci-lint
-GOLANGCI_LINT_VERSION = v1.57.2
+GOLANGCI_LINT_VERSION = v1.62.2
 
 # go files to be checked
 GO_FILES=$(shell git ls-files '*.go')

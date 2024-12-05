@@ -1,12 +1,6 @@
 run:
   build-tags:
     - testtools
-  skip-files:
-    - internal/ent/generated/*
-    - internal/graphql/gen_*
-  skip-dirs:
-    # Exclude generated ent code
-    - internal/ent/generated
 
 linters-settings:
   goimports:
@@ -32,10 +26,10 @@ linters:
     # additional linters
     - gocritic
     - gocyclo
-    - goerr113
+    - err113
     - gofmt
     - goimports
-    - gomnd
+    - mnd
     - govet
     - misspell
     - revive
@@ -44,6 +38,12 @@ linters:
     - wsl
 
 issues:
+  exclude-files:
+    - internal/ent/generated/.*
+    - internal/graphql/gen_.*
+  exclude-dirs:
+    # Exclude generated ent code
+    - internal/ent/generated
   exclude:
     # Default excludes from `golangci-lint run --help` with EXC0002 removed
     # EXC0001 errcheck: Almost all programs ignore errors on these functions and in most cases it's ok
