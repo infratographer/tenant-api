@@ -1,7 +1,7 @@
 # Used to install CRDB into the devcontainer
 FROM cockroachdb/cockroach:latest-v23.1 as CRDB
 
-FROM mcr.microsoft.com/vscode/devcontainers/go:1-1.22-bullseye
+FROM mcr.microsoft.com/vscode/devcontainers/go:1-1.23-bullseye
 
 # Set up crdb
 RUN mkdir /usr/local/lib/cockroach
