@@ -178,4 +178,4 @@ spec:
           secret:
             secretName: "{{ .Values.api.db.certSecret }}"
         {{- end }}
-{{- include "iam-runtime-infratographer.configmap" $ }}
+{{- include "iam-runtime-infratographer.manifests" $ }}
