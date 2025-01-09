@@ -98,5 +98,5 @@ jobs:
       - name: Comment PR with execution number
         uses: thollander/actions-comment-pull-request@v3
         with:
-          filePath: comment.txt
-          comment_tag: infratographer-apollo-graph-check
+          file-path: comment.txt
+          comment-tag: infratographer-apollo-graph-check
