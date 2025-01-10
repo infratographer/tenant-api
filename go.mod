@@ -9,7 +9,7 @@ require (
 	entgo.io/ent v0.14.1
 	github.com/99designs/gqlgen v0.17.63
 	github.com/99designs/gqlgen-contrib v0.1.1-0.20240617120339-2c008e74bff2
-	github.com/Yamashou/gqlgenc v0.19.3
+	github.com/Yamashou/gqlgenc v0.30.2
 	github.com/brianvoe/gofakeit/v7 v7.1.2
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/hashicorp/go-multierror v1.1.1
