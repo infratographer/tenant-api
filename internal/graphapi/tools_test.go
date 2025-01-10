@@ -8,11 +8,17 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"entgo.io/ent/dialect"
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/lru"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/vektah/gqlparser/v2/ast"
 	"go.infratographer.com/x/echojwtx"
 	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/goosex"
@@ -150,7 +156,7 @@ func teardownDB() {
 }
 
 func graphTestClient(entClient *ent.Client) testclient.TestClient {
-	return testclient.NewClient(&http.Client{Transport: localRoundTripper{handler: handler.NewDefaultServer(
+	return testclient.NewClient(&http.Client{Transport: localRoundTripper{handler: newDefaultServer(
 		graphapi.NewExecutableSchema(
 			graphapi.Config{Resolvers: graphapi.NewResolver(entClient, zap.NewNop().Sugar())},
 		))}}, "graph")
@@ -169,4 +175,25 @@ func (l localRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	l.handler.ServeHTTP(w, req)
 
 	return w.Result(), nil
+}
+
+func newDefaultServer(es graphql.ExecutableSchema) *handler.Server {
+	srv := handler.New(es)
+
+	srv.AddTransport(transport.Websocket{
+		KeepAlivePingInterval: 10 * time.Second,
+	})
+	srv.AddTransport(transport.Options{})
+	srv.AddTransport(transport.GET{})
+	srv.AddTransport(transport.POST{})
+	srv.AddTransport(transport.MultipartForm{})
+
+	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
+
+	srv.Use(extension.Introspection{})
+	srv.Use(extension.AutomaticPersistedQuery{
+		Cache: lru.New[string](100),
+	})
+
+	return srv
 }
