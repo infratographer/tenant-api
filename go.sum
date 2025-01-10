@@ -26,8 +26,8 @@ github.com/Microsoft/hcsshim v0.11.5 h1:haEcLNpj9Ka1gd3B3tAEs9CpE0c+1IhoL59w/exY
 github.com/Microsoft/hcsshim v0.11.5/go.mod h1:MV8xMfmECjl5HdO7U/3/hFVnkmSBjAjmA09d4bExKcU=
 github.com/XSAM/otelsql v0.32.0 h1:vDRE4nole0iOOlTaC/Bn6ti7VowzgxK39n3Ll1Kt7i0=
 github.com/XSAM/otelsql v0.32.0/go.mod h1:Ary0hlyVBbaSwo8atZB8Aoothg9s/LBJj/N/p5qDmLM=
-github.com/Yamashou/gqlgenc v0.19.3 h1:StpiNvNDGjDh2gdN3s+9HTirLtFKzTrybciqnTWGybQ=
-github.com/Yamashou/gqlgenc v0.19.3/go.mod h1:oMc4EQBQeDwLIODvgcvpaSp6rO+KMf47FuOhplv5D3A=
+github.com/Yamashou/gqlgenc v0.30.2 h1:hkoWStLZI2JgrgZuHlJXVnDFt0/B2X6YLv6hFPYpEAg=
+github.com/Yamashou/gqlgenc v0.30.2/go.mod h1:0VNZtzXhyDofkNNZXXPw8LSLvi3vyG6LXo7XvcWv2X4=
 github.com/agext/levenshtein v1.2.1 h1:QmvMAjj2aEICytGiWzmxoE0x2KZvE0fvmqMOfy2tjT8=
 github.com/agext/levenshtein v1.2.1/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
 github.com/agnivade/levenshtein v1.2.0 h1:U9L4IOT0Y3i0TIlUIDJ7rVUziKi/zPbrJGaFrtYH3SY=
