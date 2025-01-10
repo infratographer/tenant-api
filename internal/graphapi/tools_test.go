@@ -16,6 +16,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/Yamashou/gqlgenc/clientv2"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -159,7 +160,7 @@ func graphTestClient(entClient *ent.Client) testclient.TestClient {
 	return testclient.NewClient(&http.Client{Transport: localRoundTripper{handler: newDefaultServer(
 		graphapi.NewExecutableSchema(
 			graphapi.Config{Resolvers: graphapi.NewResolver(entClient, zap.NewNop().Sugar())},
-		))}}, "graph")
+		))}}, "graph", &clientv2.Options{})
 }
 
 // localRoundTripper is an http.RoundTripper that executes HTTP transactions

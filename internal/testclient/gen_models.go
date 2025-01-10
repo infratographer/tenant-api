@@ -210,7 +210,7 @@ func (e OrderDirection) String() string {
 	return string(e)
 }
 
-func (e *OrderDirection) UnmarshalGQL(v interface{}) error {
+func (e *OrderDirection) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
@@ -254,7 +254,7 @@ func (e TenantOrderField) String() string {
 	return string(e)
 }
 
-func (e *TenantOrderField) UnmarshalGQL(v interface{}) error {
+func (e *TenantOrderField) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")

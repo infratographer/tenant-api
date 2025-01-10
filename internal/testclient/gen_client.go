@@ -4,97 +4,392 @@ package testclient
 
 import (
 	"context"
-	"net/http"
 	"time"
 
-	"github.com/Yamashou/gqlgenc/client"
+	"github.com/Yamashou/gqlgenc/clientv2"
 	"go.infratographer.com/x/gidx"
 )
 
 type TestClient interface {
-	GetTenant(ctx context.Context, id gidx.PrefixedID, httpRequestOptions ...client.HTTPRequestOption) (*GetTenant, error)
-	GetTenantChildByID(ctx context.Context, id gidx.PrefixedID, childID gidx.PrefixedID, httpRequestOptions ...client.HTTPRequestOption) (*GetTenantChildByID, error)
-	GetTenantChildren(ctx context.Context, id gidx.PrefixedID, orderBy *TenantOrder, httpRequestOptions ...client.HTTPRequestOption) (*GetTenantChildren, error)
-	TenantCreate(ctx context.Context, input CreateTenantInput, httpRequestOptions ...client.HTTPRequestOption) (*TenantCreate, error)
-	TenantDelete(ctx context.Context, id gidx.PrefixedID, httpRequestOptions ...client.HTTPRequestOption) (*TenantDelete, error)
-	TenantUpdate(ctx context.Context, id gidx.PrefixedID, input UpdateTenantInput, httpRequestOptions ...client.HTTPRequestOption) (*TenantUpdate, error)
+	GetTenant(ctx context.Context, id gidx.PrefixedID, interceptors ...clientv2.RequestInterceptor) (*GetTenant, error)
+	GetTenantChildren(ctx context.Context, id gidx.PrefixedID, orderBy *TenantOrder, interceptors ...clientv2.RequestInterceptor) (*GetTenantChildren, error)
+	GetTenantChildByID(ctx context.Context, id gidx.PrefixedID, childID gidx.PrefixedID, interceptors ...clientv2.RequestInterceptor) (*GetTenantChildByID, error)
+	TenantCreate(ctx context.Context, input CreateTenantInput, interceptors ...clientv2.RequestInterceptor) (*TenantCreate, error)
+	TenantUpdate(ctx context.Context, id gidx.PrefixedID, input UpdateTenantInput, interceptors ...clientv2.RequestInterceptor) (*TenantUpdate, error)
+	TenantDelete(ctx context.Context, id gidx.PrefixedID, interceptors ...clientv2.RequestInterceptor) (*TenantDelete, error)
 }
 
 type Client struct {
-	Client *client.Client
+	Client *clientv2.Client
 }
 
-func NewClient(cli *http.Client, baseURL string, options ...client.HTTPRequestOption) TestClient {
-	return &Client{Client: client.NewClient(cli, baseURL, options...)}
+func NewClient(cli clientv2.HttpClient, baseURL string, options *clientv2.Options, interceptors ...clientv2.RequestInterceptor) TestClient {
+	return &Client{Client: clientv2.NewClient(cli, baseURL, options, interceptors...)}
+}
+
+type GetTenant_Tenant_Parent struct {
+	ID   gidx.PrefixedID "json:\"id\" graphql:\"id\""
+	Name string          "json:\"name\" graphql:\"name\""
+}
+
+func (t *GetTenant_Tenant_Parent) GetID() *gidx.PrefixedID {
+	if t == nil {
+		t = &GetTenant_Tenant_Parent{}
+	}
+	return &t.ID
+}
+func (t *GetTenant_Tenant_Parent) GetName() string {
+	if t == nil {
+		t = &GetTenant_Tenant_Parent{}
+	}
+	return t.Name
+}
+
+type GetTenant_Tenant struct {
+	CreatedAt   time.Time                "json:\"createdAt\" graphql:\"createdAt\""
+	Description *string                  "json:\"description,omitempty\" graphql:\"description\""
+	ID          gidx.PrefixedID          "json:\"id\" graphql:\"id\""
+	Name        string                   "json:\"name\" graphql:\"name\""
+	Parent      *GetTenant_Tenant_Parent "json:\"parent,omitempty\" graphql:\"parent\""
+	UpdatedAt   time.Time                "json:\"updatedAt\" graphql:\"updatedAt\""
+}
+
+func (t *GetTenant_Tenant) GetCreatedAt() *time.Time {
+	if t == nil {
+		t = &GetTenant_Tenant{}
+	}
+	return &t.CreatedAt
+}
+func (t *GetTenant_Tenant) GetDescription() *string {
+	if t == nil {
+		t = &GetTenant_Tenant{}
+	}
+	return t.Description
+}
+func (t *GetTenant_Tenant) GetID() *gidx.PrefixedID {
+	if t == nil {
+		t = &GetTenant_Tenant{}
+	}
+	return &t.ID
+}
+func (t *GetTenant_Tenant) GetName() string {
+	if t == nil {
+		t = &GetTenant_Tenant{}
+	}
+	return t.Name
+}
+func (t *GetTenant_Tenant) GetParent() *GetTenant_Tenant_Parent {
+	if t == nil {
+		t = &GetTenant_Tenant{}
+	}
+	return t.Parent
+}
+func (t *GetTenant_Tenant) GetUpdatedAt() *time.Time {
+	if t == nil {
+		t = &GetTenant_Tenant{}
+	}
+	return &t.UpdatedAt
+}
+
+type GetTenantChildren_Tenant_Children_Edges_Node struct {
+	Description *string         "json:\"description,omitempty\" graphql:\"description\""
+	ID          gidx.PrefixedID "json:\"id\" graphql:\"id\""
+	Name        string          "json:\"name\" graphql:\"name\""
+}
+
+func (t *GetTenantChildren_Tenant_Children_Edges_Node) GetDescription() *string {
+	if t == nil {
+		t = &GetTenantChildren_Tenant_Children_Edges_Node{}
+	}
+	return t.Description
+}
+func (t *GetTenantChildren_Tenant_Children_Edges_Node) GetID() *gidx.PrefixedID {
+	if t == nil {
+		t = &GetTenantChildren_Tenant_Children_Edges_Node{}
+	}
+	return &t.ID
+}
+func (t *GetTenantChildren_Tenant_Children_Edges_Node) GetName() string {
+	if t == nil {
+		t = &GetTenantChildren_Tenant_Children_Edges_Node{}
+	}
+	return t.Name
+}
+
+type GetTenantChildren_Tenant_Children_Edges struct {
+	Node *GetTenantChildren_Tenant_Children_Edges_Node "json:\"node,omitempty\" graphql:\"node\""
+}
+
+func (t *GetTenantChildren_Tenant_Children_Edges) GetNode() *GetTenantChildren_Tenant_Children_Edges_Node {
+	if t == nil {
+		t = &GetTenantChildren_Tenant_Children_Edges{}
+	}
+	return t.Node
+}
+
+type GetTenantChildren_Tenant_Children struct {
+	Edges []*GetTenantChildren_Tenant_Children_Edges "json:\"edges,omitempty\" graphql:\"edges\""
+}
+
+func (t *GetTenantChildren_Tenant_Children) GetEdges() []*GetTenantChildren_Tenant_Children_Edges {
+	if t == nil {
+		t = &GetTenantChildren_Tenant_Children{}
+	}
+	return t.Edges
+}
+
+type GetTenantChildren_Tenant struct {
+	Children GetTenantChildren_Tenant_Children "json:\"children\" graphql:\"children\""
+}
+
+func (t *GetTenantChildren_Tenant) GetChildren() *GetTenantChildren_Tenant_Children {
+	if t == nil {
+		t = &GetTenantChildren_Tenant{}
+	}
+	return &t.Children
+}
+
+type GetTenantChildByID_Tenant_Children_Edges_Node struct {
+	Description *string         "json:\"description,omitempty\" graphql:\"description\""
+	ID          gidx.PrefixedID "json:\"id\" graphql:\"id\""
+	Name        string          "json:\"name\" graphql:\"name\""
+}
+
+func (t *GetTenantChildByID_Tenant_Children_Edges_Node) GetDescription() *string {
+	if t == nil {
+		t = &GetTenantChildByID_Tenant_Children_Edges_Node{}
+	}
+	return t.Description
+}
+func (t *GetTenantChildByID_Tenant_Children_Edges_Node) GetID() *gidx.PrefixedID {
+	if t == nil {
+		t = &GetTenantChildByID_Tenant_Children_Edges_Node{}
+	}
+	return &t.ID
+}
+func (t *GetTenantChildByID_Tenant_Children_Edges_Node) GetName() string {
+	if t == nil {
+		t = &GetTenantChildByID_Tenant_Children_Edges_Node{}
+	}
+	return t.Name
+}
+
+type GetTenantChildByID_Tenant_Children_Edges struct {
+	Node *GetTenantChildByID_Tenant_Children_Edges_Node "json:\"node,omitempty\" graphql:\"node\""
+}
+
+func (t *GetTenantChildByID_Tenant_Children_Edges) GetNode() *GetTenantChildByID_Tenant_Children_Edges_Node {
+	if t == nil {
+		t = &GetTenantChildByID_Tenant_Children_Edges{}
+	}
+	return t.Node
+}
+
+type GetTenantChildByID_Tenant_Children struct {
+	Edges []*GetTenantChildByID_Tenant_Children_Edges "json:\"edges,omitempty\" graphql:\"edges\""
+}
+
+func (t *GetTenantChildByID_Tenant_Children) GetEdges() []*GetTenantChildByID_Tenant_Children_Edges {
+	if t == nil {
+		t = &GetTenantChildByID_Tenant_Children{}
+	}
+	return t.Edges
+}
+
+type GetTenantChildByID_Tenant struct {
+	Children GetTenantChildByID_Tenant_Children "json:\"children\" graphql:\"children\""
+}
+
+func (t *GetTenantChildByID_Tenant) GetChildren() *GetTenantChildByID_Tenant_Children {
+	if t == nil {
+		t = &GetTenantChildByID_Tenant{}
+	}
+	return &t.Children
+}
+
+type TenantCreate_TenantCreate_Tenant_Parent struct {
+	ID gidx.PrefixedID "json:\"id\" graphql:\"id\""
+}
+
+func (t *TenantCreate_TenantCreate_Tenant_Parent) GetID() *gidx.PrefixedID {
+	if t == nil {
+		t = &TenantCreate_TenantCreate_Tenant_Parent{}
+	}
+	return &t.ID
+}
+
+type TenantCreate_TenantCreate_Tenant struct {
+	Description *string                                  "json:\"description,omitempty\" graphql:\"description\""
+	ID          gidx.PrefixedID                          "json:\"id\" graphql:\"id\""
+	Name        string                                   "json:\"name\" graphql:\"name\""
+	Parent      *TenantCreate_TenantCreate_Tenant_Parent "json:\"parent,omitempty\" graphql:\"parent\""
+}
+
+func (t *TenantCreate_TenantCreate_Tenant) GetDescription() *string {
+	if t == nil {
+		t = &TenantCreate_TenantCreate_Tenant{}
+	}
+	return t.Description
+}
+func (t *TenantCreate_TenantCreate_Tenant) GetID() *gidx.PrefixedID {
+	if t == nil {
+		t = &TenantCreate_TenantCreate_Tenant{}
+	}
+	return &t.ID
+}
+func (t *TenantCreate_TenantCreate_Tenant) GetName() string {
+	if t == nil {
+		t = &TenantCreate_TenantCreate_Tenant{}
+	}
+	return t.Name
+}
+func (t *TenantCreate_TenantCreate_Tenant) GetParent() *TenantCreate_TenantCreate_Tenant_Parent {
+	if t == nil {
+		t = &TenantCreate_TenantCreate_Tenant{}
+	}
+	return t.Parent
+}
+
+type TenantCreate_TenantCreate struct {
+	Tenant TenantCreate_TenantCreate_Tenant "json:\"tenant\" graphql:\"tenant\""
+}
+
+func (t *TenantCreate_TenantCreate) GetTenant() *TenantCreate_TenantCreate_Tenant {
+	if t == nil {
+		t = &TenantCreate_TenantCreate{}
+	}
+	return &t.Tenant
+}
+
+type TenantUpdate_TenantUpdate_Tenant_Parent struct {
+	ID gidx.PrefixedID "json:\"id\" graphql:\"id\""
+}
+
+func (t *TenantUpdate_TenantUpdate_Tenant_Parent) GetID() *gidx.PrefixedID {
+	if t == nil {
+		t = &TenantUpdate_TenantUpdate_Tenant_Parent{}
+	}
+	return &t.ID
+}
+
+type TenantUpdate_TenantUpdate_Tenant struct {
+	Description *string                                  "json:\"description,omitempty\" graphql:\"description\""
+	ID          gidx.PrefixedID                          "json:\"id\" graphql:\"id\""
+	Name        string                                   "json:\"name\" graphql:\"name\""
+	Parent      *TenantUpdate_TenantUpdate_Tenant_Parent "json:\"parent,omitempty\" graphql:\"parent\""
+}
+
+func (t *TenantUpdate_TenantUpdate_Tenant) GetDescription() *string {
+	if t == nil {
+		t = &TenantUpdate_TenantUpdate_Tenant{}
+	}
+	return t.Description
+}
+func (t *TenantUpdate_TenantUpdate_Tenant) GetID() *gidx.PrefixedID {
+	if t == nil {
+		t = &TenantUpdate_TenantUpdate_Tenant{}
+	}
+	return &t.ID
+}
+func (t *TenantUpdate_TenantUpdate_Tenant) GetName() string {
+	if t == nil {
+		t = &TenantUpdate_TenantUpdate_Tenant{}
+	}
+	return t.Name
+}
+func (t *TenantUpdate_TenantUpdate_Tenant) GetParent() *TenantUpdate_TenantUpdate_Tenant_Parent {
+	if t == nil {
+		t = &TenantUpdate_TenantUpdate_Tenant{}
+	}
+	return t.Parent
+}
+
+type TenantUpdate_TenantUpdate struct {
+	Tenant TenantUpdate_TenantUpdate_Tenant "json:\"tenant\" graphql:\"tenant\""
+}
+
+func (t *TenantUpdate_TenantUpdate) GetTenant() *TenantUpdate_TenantUpdate_Tenant {
+	if t == nil {
+		t = &TenantUpdate_TenantUpdate{}
+	}
+	return &t.Tenant
+}
+
+type TenantDelete_TenantDelete struct {
+	DeletedID gidx.PrefixedID "json:\"deletedID\" graphql:\"deletedID\""
+}
+
+func (t *TenantDelete_TenantDelete) GetDeletedID() *gidx.PrefixedID {
+	if t == nil {
+		t = &TenantDelete_TenantDelete{}
+	}
+	return &t.DeletedID
 }
 
 type GetTenant struct {
-	Tenant struct {
-		ID          gidx.PrefixedID "json:\"id\" graphql:\"id\""
-		Name        string          "json:\"name\" graphql:\"name\""
-		Description *string         "json:\"description\" graphql:\"description\""
-		CreatedAt   time.Time       "json:\"createdAt\" graphql:\"createdAt\""
-		UpdatedAt   time.Time       "json:\"updatedAt\" graphql:\"updatedAt\""
-		Parent      *struct {
-			ID   gidx.PrefixedID "json:\"id\" graphql:\"id\""
-			Name string          "json:\"name\" graphql:\"name\""
-		} "json:\"parent\" graphql:\"parent\""
-	} "json:\"tenant\" graphql:\"tenant\""
+	Tenant GetTenant_Tenant "json:\"tenant\" graphql:\"tenant\""
 }
-type GetTenantChildByID struct {
-	Tenant struct {
-		Children struct {
-			Edges []*struct {
-				Node *struct {
-					ID          gidx.PrefixedID "json:\"id\" graphql:\"id\""
-					Name        string          "json:\"name\" graphql:\"name\""
-					Description *string         "json:\"description\" graphql:\"description\""
-				} "json:\"node\" graphql:\"node\""
-			} "json:\"edges\" graphql:\"edges\""
-		} "json:\"children\" graphql:\"children\""
-	} "json:\"tenant\" graphql:\"tenant\""
+
+func (t *GetTenant) GetTenant() *GetTenant_Tenant {
+	if t == nil {
+		t = &GetTenant{}
+	}
+	return &t.Tenant
 }
+
 type GetTenantChildren struct {
-	Tenant struct {
-		Children struct {
-			Edges []*struct {
-				Node *struct {
-					ID          gidx.PrefixedID "json:\"id\" graphql:\"id\""
-					Name        string          "json:\"name\" graphql:\"name\""
-					Description *string         "json:\"description\" graphql:\"description\""
-				} "json:\"node\" graphql:\"node\""
-			} "json:\"edges\" graphql:\"edges\""
-		} "json:\"children\" graphql:\"children\""
-	} "json:\"tenant\" graphql:\"tenant\""
+	Tenant GetTenantChildren_Tenant "json:\"tenant\" graphql:\"tenant\""
 }
+
+func (t *GetTenantChildren) GetTenant() *GetTenantChildren_Tenant {
+	if t == nil {
+		t = &GetTenantChildren{}
+	}
+	return &t.Tenant
+}
+
+type GetTenantChildByID struct {
+	Tenant GetTenantChildByID_Tenant "json:\"tenant\" graphql:\"tenant\""
+}
+
+func (t *GetTenantChildByID) GetTenant() *GetTenantChildByID_Tenant {
+	if t == nil {
+		t = &GetTenantChildByID{}
+	}
+	return &t.Tenant
+}
+
 type TenantCreate struct {
-	TenantCreate struct {
-		Tenant struct {
-			ID          gidx.PrefixedID "json:\"id\" graphql:\"id\""
-			Name        string          "json:\"name\" graphql:\"name\""
-			Description *string         "json:\"description\" graphql:\"description\""
-			Parent      *struct {
-				ID gidx.PrefixedID "json:\"id\" graphql:\"id\""
-			} "json:\"parent\" graphql:\"parent\""
-		} "json:\"tenant\" graphql:\"tenant\""
-	} "json:\"tenantCreate\" graphql:\"tenantCreate\""
+	TenantCreate TenantCreate_TenantCreate "json:\"tenantCreate\" graphql:\"tenantCreate\""
 }
-type TenantDelete struct {
-	TenantDelete struct {
-		DeletedID gidx.PrefixedID "json:\"deletedID\" graphql:\"deletedID\""
-	} "json:\"tenantDelete\" graphql:\"tenantDelete\""
+
+func (t *TenantCreate) GetTenantCreate() *TenantCreate_TenantCreate {
+	if t == nil {
+		t = &TenantCreate{}
+	}
+	return &t.TenantCreate
 }
+
 type TenantUpdate struct {
-	TenantUpdate struct {
-		Tenant struct {
-			ID          gidx.PrefixedID "json:\"id\" graphql:\"id\""
-			Name        string          "json:\"name\" graphql:\"name\""
-			Description *string         "json:\"description\" graphql:\"description\""
-			Parent      *struct {
-				ID gidx.PrefixedID "json:\"id\" graphql:\"id\""
-			} "json:\"parent\" graphql:\"parent\""
-		} "json:\"tenant\" graphql:\"tenant\""
-	} "json:\"tenantUpdate\" graphql:\"tenantUpdate\""
+	TenantUpdate TenantUpdate_TenantUpdate "json:\"tenantUpdate\" graphql:\"tenantUpdate\""
+}
+
+func (t *TenantUpdate) GetTenantUpdate() *TenantUpdate_TenantUpdate {
+	if t == nil {
+		t = &TenantUpdate{}
+	}
+	return &t.TenantUpdate
+}
+
+type TenantDelete struct {
+	TenantDelete TenantDelete_TenantDelete "json:\"tenantDelete\" graphql:\"tenantDelete\""
+}
+
+func (t *TenantDelete) GetTenantDelete() *TenantDelete_TenantDelete {
+	if t == nil {
+		t = &TenantDelete{}
+	}
+	return &t.TenantDelete
 }
 
 const GetTenantDocument = `query GetTenant ($id: ID!) {
@@ -112,42 +407,17 @@ const GetTenantDocument = `query GetTenant ($id: ID!) {
 }
 `
 
-func (c *Client) GetTenant(ctx context.Context, id gidx.PrefixedID, httpRequestOptions ...client.HTTPRequestOption) (*GetTenant, error) {
-	vars := map[string]interface{}{
+func (c *Client) GetTenant(ctx context.Context, id gidx.PrefixedID, interceptors ...clientv2.RequestInterceptor) (*GetTenant, error) {
+	vars := map[string]any{
 		"id": id,
 	}
 
 	var res GetTenant
-	if err := c.Client.Post(ctx, "GetTenant", GetTenantDocument, &res, vars, httpRequestOptions...); err != nil {
-		return nil, err
-	}
-
-	return &res, nil
-}
-
-const GetTenantChildByIDDocument = `query GetTenantChildByID ($id: ID!, $childID: ID!) {
-	tenant(id: $id) {
-		children(where: {id:$childID}) {
-			edges {
-				node {
-					id
-					name
-					description
-				}
-			}
+	if err := c.Client.Post(ctx, "GetTenant", GetTenantDocument, &res, vars, interceptors...); err != nil {
+		if c.Client.ParseDataWhenErrors {
+			return &res, err
 		}
-	}
-}
-`
 
-func (c *Client) GetTenantChildByID(ctx context.Context, id gidx.PrefixedID, childID gidx.PrefixedID, httpRequestOptions ...client.HTTPRequestOption) (*GetTenantChildByID, error) {
-	vars := map[string]interface{}{
-		"id":      id,
-		"childID": childID,
-	}
-
-	var res GetTenantChildByID
-	if err := c.Client.Post(ctx, "GetTenantChildByID", GetTenantChildByIDDocument, &res, vars, httpRequestOptions...); err != nil {
 		return nil, err
 	}
 
@@ -169,14 +439,51 @@ const GetTenantChildrenDocument = `query GetTenantChildren ($id: ID!, $orderBy: 
 }
 `
 
-func (c *Client) GetTenantChildren(ctx context.Context, id gidx.PrefixedID, orderBy *TenantOrder, httpRequestOptions ...client.HTTPRequestOption) (*GetTenantChildren, error) {
-	vars := map[string]interface{}{
+func (c *Client) GetTenantChildren(ctx context.Context, id gidx.PrefixedID, orderBy *TenantOrder, interceptors ...clientv2.RequestInterceptor) (*GetTenantChildren, error) {
+	vars := map[string]any{
 		"id":      id,
 		"orderBy": orderBy,
 	}
 
 	var res GetTenantChildren
-	if err := c.Client.Post(ctx, "GetTenantChildren", GetTenantChildrenDocument, &res, vars, httpRequestOptions...); err != nil {
+	if err := c.Client.Post(ctx, "GetTenantChildren", GetTenantChildrenDocument, &res, vars, interceptors...); err != nil {
+		if c.Client.ParseDataWhenErrors {
+			return &res, err
+		}
+
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+const GetTenantChildByIDDocument = `query GetTenantChildByID ($id: ID!, $childID: ID!) {
+	tenant(id: $id) {
+		children(where: {id:$childID}) {
+			edges {
+				node {
+					id
+					name
+					description
+				}
+			}
+		}
+	}
+}
+`
+
+func (c *Client) GetTenantChildByID(ctx context.Context, id gidx.PrefixedID, childID gidx.PrefixedID, interceptors ...clientv2.RequestInterceptor) (*GetTenantChildByID, error) {
+	vars := map[string]any{
+		"id":      id,
+		"childID": childID,
+	}
+
+	var res GetTenantChildByID
+	if err := c.Client.Post(ctx, "GetTenantChildByID", GetTenantChildByIDDocument, &res, vars, interceptors...); err != nil {
+		if c.Client.ParseDataWhenErrors {
+			return &res, err
+		}
+
 		return nil, err
 	}
 
@@ -197,33 +504,17 @@ const TenantCreateDocument = `mutation TenantCreate ($input: CreateTenantInput!)
 }
 `
 
-func (c *Client) TenantCreate(ctx context.Context, input CreateTenantInput, httpRequestOptions ...client.HTTPRequestOption) (*TenantCreate, error) {
-	vars := map[string]interface{}{
+func (c *Client) TenantCreate(ctx context.Context, input CreateTenantInput, interceptors ...clientv2.RequestInterceptor) (*TenantCreate, error) {
+	vars := map[string]any{
 		"input": input,
 	}
 
 	var res TenantCreate
-	if err := c.Client.Post(ctx, "TenantCreate", TenantCreateDocument, &res, vars, httpRequestOptions...); err != nil {
-		return nil, err
-	}
+	if err := c.Client.Post(ctx, "TenantCreate", TenantCreateDocument, &res, vars, interceptors...); err != nil {
+		if c.Client.ParseDataWhenErrors {
+			return &res, err
+		}
 
-	return &res, nil
-}
-
-const TenantDeleteDocument = `mutation TenantDelete ($id: ID!) {
-	tenantDelete(id: $id) {
-		deletedID
-	}
-}
-`
-
-func (c *Client) TenantDelete(ctx context.Context, id gidx.PrefixedID, httpRequestOptions ...client.HTTPRequestOption) (*TenantDelete, error) {
-	vars := map[string]interface{}{
-		"id": id,
-	}
-
-	var res TenantDelete
-	if err := c.Client.Post(ctx, "TenantDelete", TenantDeleteDocument, &res, vars, httpRequestOptions...); err != nil {
 		return nil, err
 	}
 
@@ -244,16 +535,53 @@ const TenantUpdateDocument = `mutation TenantUpdate ($id: ID!, $input: UpdateTen
 }
 `
 
-func (c *Client) TenantUpdate(ctx context.Context, id gidx.PrefixedID, input UpdateTenantInput, httpRequestOptions ...client.HTTPRequestOption) (*TenantUpdate, error) {
-	vars := map[string]interface{}{
+func (c *Client) TenantUpdate(ctx context.Context, id gidx.PrefixedID, input UpdateTenantInput, interceptors ...clientv2.RequestInterceptor) (*TenantUpdate, error) {
+	vars := map[string]any{
 		"id":    id,
 		"input": input,
 	}
 
 	var res TenantUpdate
-	if err := c.Client.Post(ctx, "TenantUpdate", TenantUpdateDocument, &res, vars, httpRequestOptions...); err != nil {
+	if err := c.Client.Post(ctx, "TenantUpdate", TenantUpdateDocument, &res, vars, interceptors...); err != nil {
+		if c.Client.ParseDataWhenErrors {
+			return &res, err
+		}
+
 		return nil, err
 	}
 
 	return &res, nil
+}
+
+const TenantDeleteDocument = `mutation TenantDelete ($id: ID!) {
+	tenantDelete(id: $id) {
+		deletedID
+	}
+}
+`
+
+func (c *Client) TenantDelete(ctx context.Context, id gidx.PrefixedID, interceptors ...clientv2.RequestInterceptor) (*TenantDelete, error) {
+	vars := map[string]any{
+		"id": id,
+	}
+
+	var res TenantDelete
+	if err := c.Client.Post(ctx, "TenantDelete", TenantDeleteDocument, &res, vars, interceptors...); err != nil {
+		if c.Client.ParseDataWhenErrors {
+			return &res, err
+		}
+
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+var DocumentOperationNames = map[string]string{
+	GetTenantDocument:          "GetTenant",
+	GetTenantChildrenDocument:  "GetTenantChildren",
+	GetTenantChildByIDDocument: "GetTenantChildByID",
+	TenantCreateDocument:       "TenantCreate",
+	TenantUpdateDocument:       "TenantUpdate",
+	TenantDeleteDocument:       "TenantDelete",
 }
