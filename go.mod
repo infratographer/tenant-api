@@ -7,7 +7,7 @@ toolchain go1.23.4
 require (
 	entgo.io/contrib v0.6.0
 	entgo.io/ent v0.14.2
-	github.com/99designs/gqlgen v0.17.63
+	github.com/99designs/gqlgen v0.17.66
 	github.com/99designs/gqlgen-contrib v0.1.1-0.20240617120339-2c008e74bff2
 	github.com/Yamashou/gqlgenc v0.30.3
 	github.com/brianvoe/gofakeit/v7 v7.2.1
@@ -85,7 +85,7 @@ require (
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/minio/highwayhash v1.0.3 // indirect
@@ -164,7 +164,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250102185135-69823020774d // indirect
 	google.golang.org/grpc v1.69.4 // indirect
-	google.golang.org/protobuf v1.36.2 // indirect
+	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
