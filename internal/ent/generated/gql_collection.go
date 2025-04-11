@@ -24,8 +24,10 @@ import (
 	"entgo.io/contrib/entgql"
 	"entgo.io/ent/dialect/sql"
 	"github.com/99designs/gqlgen/graphql"
-	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
+
 	"go.infratographer.com/x/gidx"
+
+	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
 )
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.

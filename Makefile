@@ -33,12 +33,6 @@ endif
 COCKROACH_VERSION_FILE = cockroach-$(COCKROACH_VERSION).$(OS_VERSION)-$(ARCH)
 COCKROACH_RELEASE_URL = https://binaries.cockroachdb.com/$(COCKROACH_VERSION_FILE).tgz
 
-GCI_REPO = github.com/daixiang0/gci
-GCI_VERSION = v0.10.1
-
-GOLANGCI_LINT_REPO = github.com/golangci/golangci-lint
-GOLANGCI_LINT_VERSION = v1.62.2
-
 # go files to be checked
 GO_FILES=$(shell git ls-files '*.go')
 
@@ -86,30 +80,19 @@ coverage: | $(TOOLS_DIR)/cockroach  ## Generates a test coverage report.
 		go tool cover -html=coverage.out
 
 .PHONY: lint
-lint: golint gci-diff  ## Runs all lint checks.
+lint: golint  ## Runs all lint checks.
 
-golint: | vendor $(TOOLS_DIR)/golangci-lint  ## Runs Go lint checks.
+golint: | vendor  ## Runs Go lint checks.
 	@echo Linting Go files...
-	@$(TOOLS_DIR)/golangci-lint run --timeout=5m
+	@go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --fix --timeout=5m
+
+fixlint:
+	@echo Fixing go imports
+	@find . -type f -iname '*.go' | xargs go run golang.org/x/tools/cmd/goimports -w -local go.infratographer.com/tenant-api
 
 vendor:  ## Downloads and tidies go modules.
 	@go mod download
 	@go mod tidy
-
-.PHONY: gci-diff gci-write gci
-gci-diff: $(GO_FILES) | $(TOOLS_DIR)/gci  ## Outputs improper go import ordering.
-	@results=`$(TOOLS_DIR)/gci diff -s standard -s default -s 'prefix(github.com/infratographer)' $^` \
-		&& echo "$$results" \
-		&& [ -n "$$results" ] \
-			&& [ "$(IGNORE_DIFF_ERROR)" != "true" ] \
-			&& echo "Run make gci" \
-			&& exit 1 || true
-
-gci-write: $(GO_FILES) | $(TOOLS_DIR)/gci  ## Checks and updates all go files for proper import ordering.
-	@$(TOOLS_DIR)/gci write -s standard -s default -s 'prefix(github.com/infratographer)' $^
-
-gci: IGNORE_DIFF_ERROR=true
-gci: | gci-diff gci-write  ## Outputs and corrects all improper go import ordering.
 
 # Tools setup
 $(TOOLS_DIR):
@@ -122,13 +105,3 @@ $(TOOLS_DIR)/cockroach: | $(TOOLS_DIR)
 
 	$@ version
 
-$(TOOLS_DIR)/gci: | $(TOOLS_DIR)
-	@echo "Installing $(GCI_REPO)@$(GCI_VERSION)"
-	@GOBIN=$(ROOT_DIR)/$(TOOLS_DIR) go install $(GCI_REPO)@$(GCI_VERSION)
-	$@ --version
-
-$(TOOLS_DIR)/golangci-lint: | $(TOOLS_DIR)
-	@echo "Installing $(GOLANGCI_LINT_REPO)/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)"
-	@GOBIN=$(ROOT_DIR)/$(TOOLS_DIR) go install $(GOLANGCI_LINT_REPO)/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
-	$@ version
-	$@ linters

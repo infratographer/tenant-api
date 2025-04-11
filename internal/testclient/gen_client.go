@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Yamashou/gqlgenc/clientv2"
+
 	"go.infratographer.com/x/gidx"
 )
 

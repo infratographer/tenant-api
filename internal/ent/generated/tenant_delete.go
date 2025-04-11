@@ -22,6 +22,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+
 	"go.infratographer.com/tenant-api/internal/ent/generated/predicate"
 	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
 )

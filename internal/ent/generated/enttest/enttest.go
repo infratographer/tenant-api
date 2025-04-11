@@ -19,12 +19,13 @@ package enttest
 import (
 	"context"
 
+	"entgo.io/ent/dialect/sql/schema"
+
 	"go.infratographer.com/tenant-api/internal/ent/generated"
+	"go.infratographer.com/tenant-api/internal/ent/generated/migrate"
+
 	// required by schema hooks.
 	_ "go.infratographer.com/tenant-api/internal/ent/generated/runtime"
-
-	"entgo.io/ent/dialect/sql/schema"
-	"go.infratographer.com/tenant-api/internal/ent/generated/migrate"
 )
 
 type (

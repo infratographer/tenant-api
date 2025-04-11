@@ -3,8 +3,9 @@
 package graphapi
 
 import (
-	"go.infratographer.com/tenant-api/internal/ent/generated"
 	"go.infratographer.com/x/gidx"
+
+	"go.infratographer.com/tenant-api/internal/ent/generated"
 )
 
 // Return response from tenantCreate.

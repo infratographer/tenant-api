@@ -7,13 +7,14 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
+
 	"go.infratographer.com/x/crdbx"
 	"go.infratographer.com/x/goosex"
 	"go.infratographer.com/x/loggingx"
 	"go.infratographer.com/x/otelx"
 	"go.infratographer.com/x/versionx"
 	"go.infratographer.com/x/viperx"
-	"go.uber.org/zap"
 
 	dbm "go.infratographer.com/tenant-api/db"
 	"go.infratographer.com/tenant-api/internal/config"

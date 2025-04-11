@@ -25,11 +25,13 @@ import (
 	"entgo.io/ent"
 	"github.com/metal-toolbox/iam-runtime-contrib/iamruntime"
 	"github.com/metal-toolbox/iam-runtime/pkg/iam/runtime/authorization"
+
 	"go.infratographer.com/permissions-api/pkg/permissions"
-	"go.infratographer.com/tenant-api/internal/ent/generated"
-	"go.infratographer.com/tenant-api/internal/ent/generated/hook"
 	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/gidx"
+
+	"go.infratographer.com/tenant-api/internal/ent/generated"
+	"go.infratographer.com/tenant-api/internal/ent/generated/hook"
 )
 
 func TenantHooks() []ent.Hook {

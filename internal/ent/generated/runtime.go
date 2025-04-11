@@ -19,9 +19,10 @@ package generated
 import (
 	"time"
 
+	"go.infratographer.com/x/gidx"
+
 	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
 	"go.infratographer.com/tenant-api/internal/ent/schema"
-	"go.infratographer.com/x/gidx"
 )
 
 // The init function reads all schema descriptors with runtime code

@@ -21,9 +21,10 @@ import (
 	"fmt"
 	"time"
 
+	"go.infratographer.com/x/gidx"
+
 	"go.infratographer.com/tenant-api/internal/ent/generated/predicate"
 	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
-	"go.infratographer.com/x/gidx"
 )
 
 // TenantWhereInput represents a where input for filtering Tenant queries.

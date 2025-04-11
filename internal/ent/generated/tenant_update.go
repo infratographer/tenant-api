@@ -24,9 +24,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+
+	"go.infratographer.com/x/gidx"
+
 	"go.infratographer.com/tenant-api/internal/ent/generated/predicate"
 	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
-	"go.infratographer.com/x/gidx"
 )
 
 // TenantUpdate is the builder for updating Tenant entities.

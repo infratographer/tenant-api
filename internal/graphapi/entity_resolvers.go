@@ -7,8 +7,9 @@ package graphapi
 import (
 	"context"
 
-	"go.infratographer.com/tenant-api/internal/ent/generated"
 	"go.infratographer.com/x/gidx"
+
+	"go.infratographer.com/tenant-api/internal/ent/generated"
 )
 
 // FindTenantByID is the resolver for the findTenantByID field.

@@ -4,10 +4,11 @@ import (
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
+
 	"go.infratographer.com/x/crdbx"
 	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/otelx"
-	"go.uber.org/zap"
 
 	"go.infratographer.com/tenant-api/internal/config"
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"
@@ -50,7 +51,7 @@ func initializeGraphClient() (*ent.Client, func()) {
 
 	eventhooks.EventHooks(client)
 
-	return client, func() { db.Close(); client.Close() }
+	return client, func() { db.Close(); client.Close() } //nolint:errcheck
 }
 
 func init() {

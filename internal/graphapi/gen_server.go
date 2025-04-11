@@ -18,8 +18,10 @@ import (
 	"github.com/99designs/gqlgen/plugin/federation/fedruntime"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	"go.infratographer.com/tenant-api/internal/ent/generated"
+
 	"go.infratographer.com/x/gidx"
+
+	"go.infratographer.com/tenant-api/internal/ent/generated"
 )
 
 // region    ************************** generated!.gotpl **************************

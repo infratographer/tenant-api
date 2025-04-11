@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
 	"go.infratographer.com/x/gidx"
 
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"

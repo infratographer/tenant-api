@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
 	"go.infratographer.com/x/gidx"
 
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"

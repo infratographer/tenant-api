@@ -26,6 +26,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+
 	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
 )
 

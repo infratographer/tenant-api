@@ -13,8 +13,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/wundergraph/graphql-go-tools/pkg/playground"
-	"go.infratographer.com/x/gqlgenx/oteltracing"
 	"go.uber.org/zap"
+
+	"go.infratographer.com/x/gqlgenx/oteltracing"
 
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"
 )

@@ -23,15 +23,16 @@ import (
 	"log"
 	"reflect"
 
-	"go.infratographer.com/tenant-api/internal/ent/generated/migrate"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
+
 	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/gidx"
+
+	"go.infratographer.com/tenant-api/internal/ent/generated/migrate"
+	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
 )
 
 // Client is the client that holds all ent builders.
