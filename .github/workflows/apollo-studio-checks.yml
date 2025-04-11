@@ -19,7 +19,7 @@ jobs:
       APOLLO_VCS_REMOTE_URL: ${{ github.event.pull_request.head.repo.clone_url }}
       APOLLO_VCS_BRANCH: ${{ github.event.pull_request.head.label }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -96,7 +96,7 @@ jobs:
           print_details
 
       - name: Comment PR with execution number
-        uses: thollander/actions-comment-pull-request@v3
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
         with:
           file-path: comment.txt
           comment-tag: infratographer-apollo-graph-check
