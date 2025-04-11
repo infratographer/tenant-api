@@ -16,4 +16,4 @@ dependencies:
     repository: https://infratographer.github.io/charts
     tags:
       - iam-runtime
-    version: v1.0.0
+    version: v1.1.2
