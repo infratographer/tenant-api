@@ -15,12 +15,13 @@ import (
 	"github.com/metal-toolbox/iam-runtime-contrib/middleware/echo/iamruntimemiddleware"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
+
 	"go.infratographer.com/x/crdbx"
 	"go.infratographer.com/x/echox"
 	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/otelx"
 	"go.infratographer.com/x/versionx"
-	"go.uber.org/zap"
 
 	"go.infratographer.com/tenant-api/internal/config"
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"
@@ -87,7 +88,7 @@ func serve(ctx context.Context) {
 		logger.Fatal("unable to initialize crdb client", zap.Error(err))
 	}
 
-	defer db.Close()
+	defer db.Close() //nolint:errcheck
 
 	entDB := entsql.OpenDB(dialect.Postgres, db)
 
@@ -101,7 +102,7 @@ func serve(ctx context.Context) {
 	}
 
 	client := ent.NewClient(cOpts...)
-	defer client.Close()
+	defer client.Close() //nolint:errcheck
 
 	eventhooks.EventHooks(client)
 

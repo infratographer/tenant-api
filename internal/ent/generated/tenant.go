@@ -23,8 +23,10 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
+
 	"go.infratographer.com/x/gidx"
+
+	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
 )
 
 // Representation of a tenant.

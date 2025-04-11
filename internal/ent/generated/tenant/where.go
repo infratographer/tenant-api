@@ -21,8 +21,10 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"go.infratographer.com/tenant-api/internal/ent/generated/predicate"
+
 	"go.infratographer.com/x/gidx"
+
+	"go.infratographer.com/tenant-api/internal/ent/generated/predicate"
 )
 
 // ID filters vertices based on their ID field.

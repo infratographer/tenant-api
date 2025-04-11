@@ -23,6 +23,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/vektah/gqlparser/v2/ast"
+
 	"go.infratographer.com/x/entx"
 	"go.infratographer.com/x/gidx"
 )

@@ -23,8 +23,10 @@ import (
 	"entgo.io/contrib/entgql"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/hashicorp/go-multierror"
-	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
+
 	"go.infratographer.com/x/gidx"
+
+	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
 )
 
 // Noder wraps the basic Node method.

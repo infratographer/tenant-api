@@ -21,6 +21,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+
 	"go.infratographer.com/x/gidx"
 )
 

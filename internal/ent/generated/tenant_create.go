@@ -24,8 +24,10 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
+
 	"go.infratographer.com/x/gidx"
+
+	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
 )
 
 // TenantCreate is the builder for creating a Tenant entity.

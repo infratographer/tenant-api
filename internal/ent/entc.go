@@ -23,6 +23,7 @@ import (
 	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
 	"entgo.io/ent/schema/field"
+
 	"go.infratographer.com/x/entx"
 )
 

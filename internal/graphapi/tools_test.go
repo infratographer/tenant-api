@@ -20,12 +20,13 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/vektah/gqlparser/v2/ast"
+	"go.uber.org/zap"
+
 	"go.infratographer.com/x/echojwtx"
 	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/goosex"
 	"go.infratographer.com/x/testing/containersx"
 	"go.infratographer.com/x/testing/eventtools"
-	"go.uber.org/zap"
 
 	"go.infratographer.com/tenant-api/db"
 	ent "go.infratographer.com/tenant-api/internal/ent/generated"

@@ -6,13 +6,18 @@ package graphapi
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/metal-toolbox/iam-runtime-contrib/iamruntime"
+
+	"go.infratographer.com/x/gidx"
+
 	"go.infratographer.com/tenant-api/internal/ent/generated"
 	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
-	"go.infratographer.com/x/gidx"
 )
+
+// ErrTenantHasChildren is returned when attempting to delete a tenant which has child tenants.
+var ErrTenantHasChildren = errors.New("tenant has children and can't be deleted")
 
 // TenantCreate is the resolver for the tenantCreate field.
 func (r *mutationResolver) TenantCreate(ctx context.Context, input generated.CreateTenantInput) (*TenantCreatePayload, error) {
@@ -44,6 +49,7 @@ func (r *mutationResolver) TenantUpdate(ctx context.Context, id gidx.PrefixedID,
 	if err != nil {
 		return nil, err
 	}
+
 	return &TenantUpdatePayload{Tenant: tnt}, nil
 }
 
@@ -59,7 +65,7 @@ func (r *mutationResolver) TenantDelete(ctx context.Context, id gidx.PrefixedID)
 	}
 
 	if childrenCount != 0 {
-		return nil, fmt.Errorf("tenant has children and can't be deleted")
+		return nil, ErrTenantHasChildren
 	}
 
 	if err := r.client.Tenant.DeleteOneID(id).Exec(ctx); err != nil {

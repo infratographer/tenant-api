@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"entgo.io/ent/dialect/sql"
+
 	"go.infratographer.com/tenant-api/internal/ent/generated"
 	"go.infratographer.com/tenant-api/internal/ent/generated/predicate"
 	"go.infratographer.com/tenant-api/internal/ent/generated/tenant"
