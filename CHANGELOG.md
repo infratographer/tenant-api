@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.2](https://github.com/infratographer/tenant-api/compare/v0.5.1...v0.5.2) (2025-04-15)
+
+
+### Bug Fixes
+
+* **chart:** update otel trace configuration ([#251](https://github.com/infratographer/tenant-api/issues/251)) ([015022a](https://github.com/infratographer/tenant-api/commit/015022acc08f652a35476a50afee8874fc799695))
+* **deps:** update module go.infratographer.com/permissions-api to v0.7.2 ([#249](https://github.com/infratographer/tenant-api/issues/249)) ([5e4d78d](https://github.com/infratographer/tenant-api/commit/5e4d78d8932a802f6e9f3030a09e4389742a72a8))
+
 ## [0.5.1](https://github.com/infratographer/tenant-api/compare/v0.5.0...v0.5.1) (2025-04-11)
 
 
