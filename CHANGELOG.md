@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.3](https://github.com/infratographer/tenant-api/compare/v0.5.2...v0.5.3) (2025-04-18)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/mattn/go-sqlite3 to v1.14.28 ([#252](https://github.com/infratographer/tenant-api/issues/252)) ([1ad32ed](https://github.com/infratographer/tenant-api/commit/1ad32ed1f2d155c195b27b5c960c2df24ad75567))
+
 ## [0.5.2](https://github.com/infratographer/tenant-api/compare/v0.5.1...v0.5.2) (2025-04-15)
 
 
