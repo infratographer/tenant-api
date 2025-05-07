@@ -20,7 +20,7 @@ require (
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
-	github.com/vektah/gqlparser/v2 v2.5.24
+	github.com/vektah/gqlparser/v2 v2.5.27
 	github.com/wundergraph/graphql-go-tools v1.67.4
 	go.infratographer.com/permissions-api v0.7.2
 	go.infratographer.com/x v0.9.2
